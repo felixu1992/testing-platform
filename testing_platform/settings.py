@@ -83,10 +83,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
         'NAME': 'testing_platform',  # 数据库名称
-        'USER': 'root',  # 连接数据库的用户名称
-        'PASSWORD': 'felixu19920320++-',  # 用户密码
-        'HOST': '47.92.233.129',  # 访问的数据库的主机的ip地址
-        'PORT': '3306',  # 默认mysql访问端口
+        'USER': '',  # 连接数据库的用户名称
+        'PASSWORD': '',  # 用户密码
+        'HOST': '',  # 访问的数据库的主机的ip地址
+        'PORT': '',  # 默认mysql访问端口
     }
 }
 
