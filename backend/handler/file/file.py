@@ -16,7 +16,6 @@ def create(request):
     """
     body = full_data(request, 'POST')
     contactor = Contactor(**body)
-    contactor.owner = UserHolder.current_user()
     try:
         contactor.full_clean()
     except ValidationError as e:
@@ -25,16 +24,16 @@ def create(request):
     return Response.success(contactor)
 
 
-def delete(request):
+def delete(request, id):
     """
     根据 id 删除联系人
     """
-    params = full_data(request, 'DELETE')
-    id = get_params(params, 'id')
+    full_data(request, 'DELETE')
     try:
-        contactor = Contactor.objects.get(id=id)
+        contactor = Contactor.objects.get(owner=UserHolder.current_user(), id=id)
     except ObjectDoesNotExist:
         raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
+    # TODO 判断是否被用例使用
     contactor.delete()
     return Response.def_success()
 
@@ -46,7 +45,7 @@ def update(request):
     data = full_data(request, 'PUT')
     id, name = get_params(data, 'id', 'name')
     try:
-        contractor = Contactor.objects.get(id=id)
+        contractor = Contactor.objects.get(owner=UserHolder.current_user(), id=id)
     except ObjectDoesNotExist:
         raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
     contractor.name = name

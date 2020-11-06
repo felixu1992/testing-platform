@@ -22,24 +22,23 @@ class RequestMiddleware(MiddlewareMixin):
         2. 解析出 token 缓存当前用户
         """
         # 非登录和主页才拦截
-        if request.path != '/user/signin' and request.path != '/':
+        if request.path != '/user/signin':
             # 取出请求头，失败跳回首页
             headers = request.headers
             try:
                 token = headers['Authorization']
             except KeyError:
-                # TODO 不用重定向，而是返回没有权限，后续改
-                return HttpResponseRedirect('/')
+                return Response.failed(ErrorCode.MISSING_AUTHORITY)
             # 认证信息不以 token 开头重定向会首页
             if not token.startswith('token '):
-                return HttpResponseRedirect('/')
+                return Response.failed(ErrorCode.MISSING_AUTHORITY)
             # 取真实 token
             token = token.replace('token ', '', 1)
             # 取 token 的缓存
             user_id = cache.get(token)
             # 不存在则 token 过期，跳首页
             if not user_id:
-                return HttpResponseRedirect('/')
+                return Response.failed(ErrorCode.MISSING_AUTHORITY)
             # 重置过期时间
             cache.expire(token, timeout=60 * 60 * 24 * 7)
             # 缓存当前用户 id

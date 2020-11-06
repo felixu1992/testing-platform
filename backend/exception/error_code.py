@@ -13,6 +13,7 @@ class ErrorCode(Enum):
     VALIDATION_ERROR = 102, '参数校验失败'
     DATA_NOT_EXISTED = 103, '当前数据不存在，请检查数据是否正确'
     MISSING_NECESSARY_KEY = 104, '缺少必要参数: {}'
+    MISSING_AUTHORITY = 105, '请检查您是否具有访问此地址的权限'
 
     def __init__(self, code, message):
         self.code = code

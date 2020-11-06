@@ -10,19 +10,12 @@ from backend.util.resp_data import Response
 from backend.exception.exception import ValidateError, PlatformError
 
 
-def test(request):
-    body = full_data(request, 'POST')
-    print(request)
-    return Response.def_success()
-
-
 def create(request):
     """
     创建联系人分组
     """
     body = full_data(request, 'POST')
     group = ContactorGroup(**body)
-    group.owner = UserHolder.current_user()
     try:
         group.full_clean()
     except ValidationError as e:
@@ -35,12 +28,12 @@ def delete(request, id):
     """
     根据 id 删除联系人分组
     """
-    params = full_data(request, 'DELETE')
-    id = get_params(params, 'id')
+    full_data(request, 'DELETE')
     try:
         group = ContactorGroup.objects.get(owner=UserHolder.current_user(), id=id)
     except ObjectDoesNotExist:
         raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
+    # 判断是否被联系人使用
     group.delete()
     return Response.def_success()
 

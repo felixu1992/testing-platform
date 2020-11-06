@@ -10,7 +10,7 @@ urlpatterns = (
 
     # 联系人
     path('create', contactor.create),
-    path('delete', contactor.delete),
+    path('delete/<id>', contactor.delete),
     path('update', contactor.update),
     path('page', contactor.page),
 )

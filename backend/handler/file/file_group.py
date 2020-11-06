@@ -16,7 +16,6 @@ def create(request):
     """
     body = full_data(request, 'POST')
     group = FileGroup(**body)
-    group.owner = UserHolder.current_user()
     try:
         group.full_clean()
     except ValidationError as e:
@@ -25,16 +24,16 @@ def create(request):
     return Response.success(group)
 
 
-def delete(request):
+def delete(request, id):
     """
     根据 id 删除文件分组
     """
-    params = full_data(request, 'DELETE')
-    id = get_params(params, 'id')
+    full_data(request, 'DELETE')
     try:
         group = FileGroup.objects.get(owner=UserHolder.current_user(), id=id)
     except ObjectDoesNotExist:
         raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
+    # 判断是否被文件使用
     group.delete()
     return Response.def_success()
 
