@@ -141,10 +141,12 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-cur_path = os.path.dirname(os.path.realpath(__file__))  # log_path是存放日志的路径
+# log_path是存放日志的路径
+cur_path = os.path.dirname(os.path.realpath(__file__))
 log_path = os.path.join(os.path.dirname(cur_path), 'logs')
 if not os.path.exists(log_path):
-    os.mkdir(log_path)  # 如果不存在这个logs文件夹，就自动创建一个
+    # 如果不存在这个logs文件夹，就自动创建一个
+    os.mkdir(log_path)
 
 LOGGING = {
     'version': 1,
@@ -219,3 +221,9 @@ LOGGING = {
 }
 
 LOGGER = logging.getLogger('log')
+
+# 存放文件的路径
+FILE_REPO = os.path.join(os.path.dirname(cur_path), 'files')
+if not os.path.exists(FILE_REPO):
+    # 如果不存在这个文件夹，就自动创建一个
+    os.mkdir(FILE_REPO)

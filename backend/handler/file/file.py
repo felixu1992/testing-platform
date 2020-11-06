@@ -1,27 +1,59 @@
+import os
+import time
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
+from django.http import FileResponse
+from django.utils.http import urlquote
 from backend.exception.error_code import ErrorCode
 from backend.util.utils import full_data
 from backend.util.utils import get_params
 from backend.util.utils import page_params
-from backend.models import Contactor
+from backend.models import File
 from backend.util.jwt_token import UserHolder
 from backend.util.resp_data import Response
 from backend.exception.exception import ValidateError, PlatformError
+from testing_platform.settings import FILE_REPO
 
 
 def create(request):
     """
-    创建联系人
+    创建文件
     """
+    print(os.path.dirname(os.path.abspath(__file__)))
     body = full_data(request, 'POST')
-    contactor = Contactor(**body)
+    file = File(**body)
+    # 处理文件
+    file.path = __file_data(request)
     try:
-        contactor.full_clean()
+        file.full_clean()
     except ValidationError as e:
         raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-    contactor.save()
-    return Response.success(contactor)
+    file.save()
+    return Response.success(file)
+
+
+def __file_data(request):
+    # 获得所有文件
+    files = request.FILES.getlist('files')
+    if len(files) == 0 or len(files) > 1:
+        raise ValidateError.error(ErrorCode.VALIDATION_ERROR, '请检查文件数目，需要有且仅有一个文件')
+    file = files[0]
+    file_path = os.path.join(FILE_REPO, str(int(time.time() * 1000)) + file.name)
+    # 写文件
+    dest = open(file_path, 'wb+')
+    for chunk in file.chunks():
+        dest.write(chunk)
+    dest.close()
+    # 返回文件路径
+    return file_path
+
+
+def download(request):
+    print('-------------')
+    # file = open(file_info.file_path, 'rb')
+    # response = FileResponse(file)
+    # response['Content-Disposition'] = 'attachment;filename="%s"' % urlquote(file_info.file_name)
+    # return response
 
 
 def delete(request, id):
@@ -78,4 +110,3 @@ def page(request):
     page_contactors = Paginator(contactors, page_size)
     page_contactors.page(page)
     return Response.success(page_contactors)
-

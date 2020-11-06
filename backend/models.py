@@ -7,6 +7,9 @@ from django.db import models
 
 
 # 统一基类
+from django.utils import timezone
+
+
 class BaseEntity(models.Model):
     created_at = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新时间', auto_now=True)
@@ -119,6 +122,9 @@ class File(BaseEntity):
     name = models.CharField(verbose_name='文件名称', max_length=32, unique=True,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
                                         MaxLengthValidator(32, message='最大长度为 32')])
+    path = models.CharField(verbose_name='文件路径', max_length=255,
+                            validators=[MinLengthValidator(1, message='最小长度为 1'),
+                                        MaxLengthValidator(255, message='最大长度为 255')])
     remark = models.CharField(verbose_name='文件描述', max_length=255, blank=True, null=True,
                               validators=[MaxLengthValidator(255, message='最大长度为 255')])
     owner = models.IntegerField(verbose_name='文件拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
