@@ -3,6 +3,7 @@ from django.core.paginator import Paginator
 
 from backend.exception.error_code import ErrorCode
 from backend.exception.exception import ValidateError, PlatformError
+from backend.handler.project import project
 from backend.models import ProjectGroup
 from backend.util.jwt_token import UserHolder
 from backend.util.resp_data import Response
@@ -13,6 +14,7 @@ def create(request):
     """
     创建项目分组
     """
+
     body = full_data(request, 'POST')
     group = ProjectGroup(**body)
     try:
@@ -27,9 +29,13 @@ def delete(request, id):
     """
     根据 id 删除项目分组
     """
+
     full_data(request, 'DELETE')
     group = get_by_id(id)
-    # 判断是否被文件使用
+    # 是否被项目使用
+    count = project.count_by_group(id)
+    if count > 0:
+        raise PlatformError.error(ErrorCode.PROJECT_GROUP_HAS_PROJECT)
     group.delete()
     return Response.def_success()
 
@@ -38,6 +44,7 @@ def update(request):
     """
     修改项目分组
     """
+
     body = full_data(request, 'PUT')
     id, name = get_params(body, 'id', 'name')
     group = get_by_id(id)
@@ -53,7 +60,10 @@ def update(request):
 def page(request):
     """
     分页查询项目分组
+
+    可根据 name 模糊查询
     """
+
     data = full_data(request, 'GET')
     page, page_size, name = page_params(data, 'name')
     groups = ProjectGroup.objects.filter(owner=UserHolder.current_user())
@@ -67,6 +77,10 @@ def page(request):
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
 
 def get_by_id(id):
+    """
+    根据 id 查询分组详情
+    """
+
     try:
         group = ProjectGroup.objects.get(owner=UserHolder.current_user(), id=id)
     except ObjectDoesNotExist:

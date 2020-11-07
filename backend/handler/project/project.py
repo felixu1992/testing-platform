@@ -106,6 +106,7 @@ def copy(request):
     1. 项目信息
     2. 项目下接口信息
     """
+
     # TODO copy
     print()
 
@@ -117,6 +118,7 @@ def execute(request):
     1. 执行接口用例
     2. 生成用例报告
     """
+
     print()
 
 
@@ -126,6 +128,7 @@ def get_by_id(id):
     """
     根据 id 查询项目
     """
+
     try:
         project = Project.objects.get(owner=UserHolder.current_user(), id=id)
     except ObjectDoesNotExist:
@@ -137,4 +140,5 @@ def count_by_group(group_id):
     """
     统计指定 group id 下项目数
     """
+
     return Project.objects.filter(owner=UserHolder.current_user(), group_id=group_id).count()

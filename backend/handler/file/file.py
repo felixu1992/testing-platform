@@ -96,12 +96,26 @@ def download(request, id):
     return response
 
 
+# -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
+
 def get_by_id(id):
+    """
+    根据 id 查询文件信息
+    """
+
     try:
         file = File.objects.get(owner=UserHolder.current_user(), id=id)
     except ObjectDoesNotExist:
         raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
     return file
+
+
+def count_by_group(group_id):
+    """
+    根据分组 id 计数
+    """
+
+    return File.objects.filter(owner=UserHolder.current_user(), group_id=group_id).count()
 
 
 def __file_data(request, toleration=False):
