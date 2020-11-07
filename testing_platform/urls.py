@@ -23,5 +23,8 @@ urlpatterns = (
     path('contactor/', include('backend.handler.contactor.urls')),
 
     # 文件
-    path('file/', include('backend.handler.file.urls'))
+    path('file/', include('backend.handler.file.urls')),
+
+    # 项目
+    path('project/', include('backend.handler.project.urls'))
 )
