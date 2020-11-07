@@ -70,11 +70,11 @@ def page(request):
     page, page_size, name, phone, email = page_params(data, 'name', 'phone', 'email')
     contactors = Contactor.objects.filter(owner=UserHolder.current_user())
     if name:
-        contactors = contactors.filer(name__contains=name)
+        contactors = contactors.filter(name__contains=name)
     if phone:
-        contactors = contactors.filer(phone__contains=phone)
+        contactors = contactors.filter(phone__contains=phone)
     if email:
-        contactors = contactors.filer(email__contains=email)
+        contactors = contactors.filter(email__contains=email)
     page_contactors = Paginator(contactors, page_size)
     page_contactors.page(page)
     return Response.success(page_contactors)

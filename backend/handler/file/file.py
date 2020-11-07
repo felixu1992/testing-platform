@@ -78,7 +78,7 @@ def page(request):
     page, page_size, name = page_params(data, 'name')
     files = File.objects.filter(owner=UserHolder.current_user())
     if name:
-        files = files.filer(name__contains=name)
+        files = files.filter(name__contains=name)
     page_files = Paginator(files, page_size)
     page_files.page(page)
     return Response.success(page_files)
