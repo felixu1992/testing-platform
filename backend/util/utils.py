@@ -1,7 +1,5 @@
 import json
-
 from django.http import QueryDict
-
 from backend.util.jwt_token import UserHolder
 from testing_platform.settings import LOGGER
 from backend.exception.error_code import ErrorCode
@@ -12,6 +10,7 @@ def full_data(request, method):
     """
     从请求中获取请求体
     """
+
     # 判断请求方法是否符合要求
     data = {}
     if request.method != method:
@@ -36,12 +35,13 @@ def full_data(request, method):
     return result
 
 
-def get_params(data, *args, toleration=False):
+def get_params(data, *args, toleration=True):
     """
     从字典 data 中取 args 中的字段值
 
     容忍度决定着是否报错
     """
+
     # 作为取值函数，data 和 args 理应均不为空
     if data is None or not isinstance(data, dict) or args is None:
         raise PlatformError.error(ErrorCode.VALIDATION_ERROR)
@@ -72,11 +72,30 @@ def page_params(data, *args):
     一般分页查询对所有可查询参数均容忍不存在
     分页参数不存在的话默认使用 page 为 1，page_size 为 10 作为分页条件
     """
+
     # 取字典中的分页参数
-    page, page_size, *values = get_params(data, 'page', 'page_size', *args, toleration=True)
+    page, page_size, *values = get_params(data, 'page', 'page_size', *args)
     # 不存在则填充默认值
     if page is None or int(page) <= 0:
         page = 1
     if page_size is None or int(page_size) <= 0:
         page_size = 10
     return page, page_size, *values
+
+
+def update_fields(obj, always=False, **kwargs):
+    """
+    更新对象中的属性
+
+    通过 always 空值是否可更新空值
+    """
+
+    if obj is None or isinstance(obj, object):
+        return
+    for field, value in kwargs.items():
+        # 总是更新，更新所有值
+        if always:
+            setattr(obj, field, value)
+        # 只更新非空值
+        elif not always and value:
+            setattr(obj, field, value)

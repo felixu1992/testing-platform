@@ -217,6 +217,12 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True
         },
+        # 打印 sql
+        # 'django.db.backends': {
+        #     'handlers': ['error', 'info', 'console', 'default'],
+        #     'propagate': True,
+        #     'level':'DEBUG',
+        # }
     }
 }
 
