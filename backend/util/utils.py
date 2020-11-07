@@ -1,4 +1,6 @@
 import json
+
+from django.db.models import QuerySet
 from django.http import QueryDict
 from backend.util.jwt_token import UserHolder
 from testing_platform.settings import LOGGER
@@ -65,6 +67,66 @@ def get_params(data, *args, toleration=True):
     return values
 
 
+def get_params_dict(data, *args, toleration=True):
+    """
+    从字典 data 中取 args 中的字段值
+
+    容忍度决定着是否报错
+    """
+
+    # 作为取值函数，data 和 args 理应均不为空
+    if data is None or not isinstance(data, dict) or args is None:
+        raise PlatformError.error(ErrorCode.VALIDATION_ERROR)
+    # 结果集
+    result = {}
+    # 遍历需要取出的关键字
+    for param in args:
+        try:
+            # 取出结果并追加
+            value = data[param]
+            result.update({param: value})
+        except KeyError:
+            # 字典中不存在，容忍则追加 None
+            if toleration:
+                LOGGER.info('参数获取失败，填充为 None，data={}，中不包含 {}', data, param)
+                result.update({param: None})
+            # 不容忍则报错
+            else:
+                LOGGER.error('参数获取失败，data={}，中不包含 {}', data, param)
+                raise PlatformError.error_args(ErrorCode.MISSING_NECESSARY_KEY, param)
+    return result
+
+
+def page_params_dict(data, *args):
+    """
+    取分页查询参数
+
+    一般分页查询对所有可查询参数均容忍不存在
+    分页参数不存在的话默认使用 page 为 1，page_size 为 10 作为分页条件
+    """
+
+    # 取字典中的分页参数
+    result = get_params_dict(data, 'page', 'page_size', *args)
+    # 不存在则填充默认值
+    # if page is None or int(page) <= 0:
+    #     page = 1
+    # if page_size is None or int(page_size) <= 0:
+    #     page_size = 10
+    # return page, page_size, *values
+    return result
+
+
+if __name__ == '__main__':
+    data = {
+        'page': 1,
+        'page_size': 10,
+        'name': 'abc',
+        'addr': 'def'
+    }
+    page, page_size, name = page_params_dict(data, 'name').values()
+    print(page, page_size, name)
+
+
 def page_params(data, *args):
     """
     取分页查询参数
@@ -99,3 +161,53 @@ def update_fields(obj, always=False, **kwargs):
         # 只更新非空值
         elif not always and value:
             setattr(obj, field, value)
+
+
+# --------------------------------------------- 对 Django 的 QuerySet 进行封装 -------------------------------------------
+
+def contains(obj, **kwargs):
+    """
+    所有字段模糊查询
+    """
+
+    if obj is None or kwargs is None or not isinstance(obj, QuerySet):
+        return obj
+    query_dict = {}
+    for key, value in kwargs.items():
+        if value:
+            # 拼上 QuerySet 的模糊后缀 __contains
+            query_dict.update({key + '__contains': value})
+    obj = obj.filter(**query_dict)
+    return obj
+
+
+def exact(obj, **kwargs):
+    """
+    所有字段精确匹配
+    """
+
+    if obj is None or kwargs is None or not isinstance(obj, QuerySet):
+        return obj
+    query_dict = {}
+    for key, value in kwargs.items():
+        if value:
+            # 拼上 QuerySet 的模糊后缀 __exact
+            query_dict.update({key + '__exact': value})
+    obj = obj.filter(**query_dict)
+    return obj
+
+
+def iexact(obj, **kwargs):
+    """
+    所有字段忽略大小写精确匹配
+    """
+
+    if obj is None or kwargs is None or not isinstance(obj, QuerySet):
+        return obj
+    query_dict = {}
+    for key, value in kwargs.items():
+        if value:
+            # 拼上 QuerySet 的模糊后缀 __iexact
+            query_dict.update({key + '__iexact': value})
+    obj = obj.filter(**query_dict)
+    return obj
