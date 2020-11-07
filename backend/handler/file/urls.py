@@ -13,4 +13,5 @@ urlpatterns = (
     path('delete/<id>', file.delete),
     path('update', file.update),
     path('page', file.page),
+    path('download/<id>', file.download)
 )

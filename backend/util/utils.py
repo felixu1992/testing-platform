@@ -1,4 +1,7 @@
 import json
+
+from django.http import QueryDict
+
 from backend.util.jwt_token import UserHolder
 from testing_platform.settings import LOGGER
 from backend.exception.error_code import ErrorCode
@@ -16,15 +19,21 @@ def full_data(request, method):
     # POST 和 PUT json 从 body 中取 form data 从 POST 中取
     if method == 'POST' or method == 'PUT':
         if request.content_type == 'application/json':
-            return json.loads(str(request.body, 'utf-8'))
+            data = json.loads(str(request.body, 'utf-8'))
         else:
-            return request.POST
+            data = request.POST
     # DELETE 和 GET 从 GET 中取
     if method == 'GET' or method == 'DELETE':
-        return request.GET
-    # 由于从 GET 或者 POST 中取出的字典 QueryDict 为不可变对象，需要执行 copy(源码注释中提供的信息) 方法
-    data = data.copy()
-    data.update({'owner': UserHolder.current_user()})
+        data = request.GET
+    # 遍历重新插值，因为如果然后是 QueryDict 直接调用对象构造函数后，数据类型不匹配
+    result = {}
+    if isinstance(data, QueryDict):
+        for key, value in data.items():
+            result.update({key: value})
+    else:
+        result = data
+    result.update({'owner': UserHolder.current_user()})
+    return result
 
 
 def get_params(data, *args, toleration=False):
