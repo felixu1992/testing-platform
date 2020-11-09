@@ -339,6 +339,9 @@ class Record(BaseEntity):
     id = models.AutoField(primary_key=True)
     group_id = models.IntegerField(verbose_name='分组 id', default=0, validators=[MinValueValidator(1, message='最小值为 1')])
     project_id = models.IntegerField(verbose_name='关联项目 id', validators=[MinValueValidator(1, message='最小值为 1')])
+    remark = models.CharField(verbose_name='记录描述', max_length=255,
+                              validators=[MinLengthValidator(1, message='最小长度为 1'),
+                                          MaxLengthValidator(255, message='最大长度为 255')])
     owner = models.IntegerField(verbose_name='拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
     passed = models.IntegerField(verbose_name='通过数', default=0)
     failed = models.IntegerField(verbose_name='失败数', default=0)
@@ -362,7 +365,8 @@ class Report(BaseEntity):
     测试报告
     """
 
-    id = models.AutoField(primary_key=True)
+    id = models.IntegerField(verbose_name='等同于用例 id', default=0,
+                             validators=[MinValueValidator(1, message='最小值为 1')])
     name = models.CharField(verbose_name='用例名称', max_length=32, unique=True,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
                                         MaxLengthValidator(32, message='最大长度为 32')])
