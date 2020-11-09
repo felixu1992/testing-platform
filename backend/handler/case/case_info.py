@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.models import CaseInfo
-from backend.util import UserHolder, Response, full_data, get_params, page_params
+from backend.util import UserHolder, Response, full_data, page_params_dict, get_params_dict, update_fields
 
 
 def create(request):
@@ -38,52 +38,12 @@ def update(request):
     修改项目信息
     """
 
-    # id = models.AutoField(primary_key=True)
-    # name = models.CharField(verbose_name='用例名称', max_length=32, unique=True,
-    #                         validators=[MinLengthValidator(1, message='最小长度为 1'),
-    #                                     MaxLengthValidator(32, message='最大长度为 32')])
-    # remark = models.CharField(verbose_name='项目备注', max_length=255, blank=True, null=True,
-    #                           validators=[MinLengthValidator(1, message='最小长度为 1'),
-    #                                       MaxLengthValidator(255, message='最大长度为 255')])
-    # method = models.CharField(verbose_name='请求方法', max_length=8,
-    #                           validators=[MinLengthValidator(1, message='最小长度为 1'),
-    #                                       MaxLengthValidator(8, message='最大长度为 8')])
-    # host = models.CharField(verbose_name='请求 host，没填会使用项目的', max_length=255, blank=True, null=True)
-    # path = models.CharField(verbose_name='请求地址', max_length=255,
-    #                         validators=[MinLengthValidator(1, message='最小长度为 1'),
-    #                                     MaxLengthValidator(255, message='最大长度为 255')])
-    # params = models.JSONField(verbose_name='请求参数', blank=True, null=True)
-    # extend_keys = models.TextField(verbose_name='扩展字段', blank=True, null=True)
-    # extend_values = models.TextField(verbose_name='扩展值', blank=True, null=True)
-    # headers = models.JSONField(verbose_name='请求头', blank=True, null=True)
-    # expected_keys = models.TextField(verbose_name='预期字段', blank=True, null=True)
-    # expected_values = models.TextField(verbose_name='预期值', blank=True, null=True)
-    # check_step = models.TextField(verbose_name='校验步骤', blank=True, null=True)
-    # expected_http_status = models.IntegerField(verbose_name='Http 状态码', default=200,
-    #                                            validators=[MinValueValidator(1, message='最小值为 1')])
-    # check_status = models.BooleanField(verbose_name='是否校验 Http 状态', default=False)
-    # run = models.BooleanField(verbose_name='是否运行', default=True)
-    # owner = models.IntegerField(verbose_name='拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
-    # developer = models.IntegerField(verbose_name='接口开发者', default=0,
-    #                                 validators=[MinValueValidator(1, message='最小值为 1')])
-    # notify = models.BooleanField(verbose_name='是否通知开发者', default=False)
-    # project_id = models.IntegerField(verbose_name='关联项目 id', validators=[MinValueValidator(1, message='最小值为 1')])
-    # sort = models.IntegerField(verbose_name='接口排序', default=0, validators=[MinValueValidator(1, message='最小值为 1')])
     data = full_data(request, 'PUT')
-    id, name, remark, cookies, headers, host = get_params(data, 'id', 'name', 'remark', 'host', 'path', 'params',
-                                                          'extend_keys', 'extend_values', 'headers',
-                                                          'expected_http_status', 'check_status', 'run')
-    project = get_by_id(id)
-    if name:
-        project.name = name
-    if remark:
-        project.remark = remark
-    if cookies:
-        project.cookies = cookies
-    if headers:
-        project.headers = headers
-    if host:
-        project.host = host
+    param_dict = get_params_dict(data, 'id', 'name', 'remark', 'host', 'path', 'params',
+                                 'extend_keys', 'extend_values', 'headers',
+                                 'expected_http_status', 'check_status', 'run', 'developer', 'notify', 'sort')
+    project = get_by_id(param_dict['id'])
+    update_fields(project, **param_dict)
     try:
         project.full_clean()
     except ValidationError as e:
@@ -106,21 +66,13 @@ def page(request):
     """
 
     data = full_data(request, 'GET')
-    page, page_size, project_id, name, path, method, run, developer = page_params(data, 'project_id', 'name', 'path',
-                                                                                  'method', 'run', 'developer')
+    page, page_size, project_id, name, path, method, run, developer = page_params_dict(data, 'project_id', 'name',
+                                                                                       'path', 'method', 'run',
+                                                                                       'developer').values()
     if project_id is None:
         raise PlatformError.error_args(ErrorCode.MISSING_NECESSARY_KEY, 'project_id')
-    case_infos = CaseInfo.objects.filter(owner=UserHolder.current_user(), project_id=project_id)
-    if name:
-        case_infos = case_infos.filter(name__contains=name)
-    if path:
-        case_infos = case_infos.filter(path__contains=path)
-    if method:
-        case_infos = case_infos.filter(method__iexact=method)
-    if run:
-        case_infos = case_infos.filter(run__exact=run)
-    if developer:
-        case_infos = case_infos.filter(developer__exact=developer)
+    case_infos = CaseInfo.objects.filter(owner=UserHolder.current_user(), project_id=project_id)\
+        .contains(name=name, path=path).iexact(method=method).exact(run=run, developer=developer)
     page_case_infos = Paginator(case_infos, page_size)
     page_case_infos.page(page)
     return Response.success(case_infos)
