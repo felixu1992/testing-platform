@@ -2,9 +2,8 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from backend.exception.error_code import ErrorCode
 from backend.handler.contactor import contactor
-from backend.util.utils import full_data, page_params_dict, contains
+from backend.util.utils import full_data, page_params_dict
 from backend.util.utils import get_params
-from backend.util.utils import page_params
 from backend.models import ContactorGroup
 from backend.util.jwt_token import UserHolder
 from backend.util.resp_data import Response
@@ -68,8 +67,7 @@ def page(request):
 
     data = full_data(request, 'GET')
     page, page_size, name = page_params_dict(data, 'name').values()
-    groups = ContactorGroup.objects.filter(owner=UserHolder.current_user())
-    groups = contains(groups, name=name)
+    groups = ContactorGroup.objects.filter(owner=UserHolder.current_user()).contains(name=name)
     page_group = Paginator(groups, page_size)
     page_group.page(page)
     return Response.success(page_group)

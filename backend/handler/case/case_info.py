@@ -183,3 +183,11 @@ def get_by_id(id):
     except ObjectDoesNotExist:
         raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
     return case_info
+
+
+def list_by_project(project_id):
+    """
+    根据项目分页查询接口列表
+    """
+
+    return CaseInfo.objects.filter(owner=UserHolder.current_user(), project_id=project_id)

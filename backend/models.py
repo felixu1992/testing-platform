@@ -4,22 +4,90 @@ from django.core.validators import MinValueValidator
 from django.core.validators import EmailValidator
 from django.core.validators import RegexValidator
 from django.db import models
+from django.db.models import QuerySet
+from django.db.models.manager import BaseManager
+from backend.exception.error_code import ErrorCode
+from backend.exception.exception import ValidateError
 
 
-# 统一基类
-from django.utils import timezone
+class PlatformQuerySet(QuerySet):
+    """
+    对原生 QuerySet 做一层封装，使其更加方便进行模糊查询、精确匹配等操作
+    """
+
+    def contains(self, **kwargs):
+        """
+        所有字段模糊查询
+        """
+
+        if kwargs is None:
+            raise ValidateError.error(ErrorCode.MISSING_NECESSARY_KEY, 'kwargs')
+        query_dict = {}
+        for key, value in kwargs.items():
+            if value:
+                # 拼上 QuerySet 的模糊后缀 __contains
+                query_dict.update({key + '__contains': value})
+        return self.filter(**query_dict)
+
+    def exact(self, **kwargs):
+        """
+        所有字段精确匹配
+        """
+
+        if kwargs is None:
+            raise ValidateError.error(ErrorCode.MISSING_NECESSARY_KEY, 'kwargs')
+        query_dict = {}
+        for key, value in kwargs.items():
+            if value:
+                # 拼上 QuerySet 的精确后缀 __exact
+                query_dict.update({key + '__exact': value})
+        return self.filter(**query_dict)
+
+    def iexact(self, **kwargs):
+        """
+        所有字段忽略大小写精确匹配
+        """
+
+        if kwargs is None:
+            raise ValidateError.error(ErrorCode.MISSING_NECESSARY_KEY, 'kwargs')
+        query_dict = {}
+        for key, value in kwargs.items():
+            if value:
+                # 拼上 QuerySet 的忽略大小写精确后缀 __iexact
+                query_dict.update({key + '__iexact': value})
+        return self.filter(**query_dict)
+
+
+class PlatformManager(BaseManager.from_queryset(PlatformQuerySet)):
+    """
+    实现 Model 中的 Manager
+
+    与官网不同的是:
+    我没有继承他的 Manager 添加方法，因为官网的方式只能在 Entity.objects.xxx 来使用自己 Manager 中的方法
+    而是参照 models。Manager 的实现，将 QuerySet 替换为我的 PlatformQuerySet
+    这样的好处是，不论在链式调用中的什么环节，均可以链式嵌入自己的封装方法
+    """
+    pass
 
 
 class BaseEntity(models.Model):
+    """
+    统一基类
+    """
+
     created_at = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新时间', auto_now=True)
+    objects = PlatformManager()
 
     class Meta:
         abstract = True
 
 
-# 用户
 class User(BaseEntity):
+    """
+    用户
+    """
+
     id = models.AutoField(primary_key=True)
     username = models.CharField(verbose_name='用户名', max_length=32, unique=True,
                                 validators=[MinLengthValidator(1, message='最小长度为 1'),
@@ -44,8 +112,11 @@ class User(BaseEntity):
         ordering = ['-created_at']
 
 
-# 联系人分组
 class ContactorGroup(BaseEntity):
+    """
+    联系人分组
+    """
+
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='分组名称', max_length=32,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
@@ -63,8 +134,11 @@ class ContactorGroup(BaseEntity):
         ]
 
 
-# 联系人
 class Contactor(BaseEntity):
+    """
+    联系人
+    """
+
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='联系人名称', max_length=32, unique=True,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
@@ -97,8 +171,11 @@ class Contactor(BaseEntity):
         ]
 
 
-# 文件分组
 class FileGroup(BaseEntity):
+    """
+    文件分组
+    """
+
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='分组名称', max_length=32,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
@@ -116,8 +193,11 @@ class FileGroup(BaseEntity):
         ]
 
 
-# 文件
 class File(BaseEntity):
+    """
+    文件
+    """
+
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='文件名称', max_length=32, unique=True,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
@@ -145,8 +225,11 @@ class File(BaseEntity):
         ]
 
 
-# 项目分组
 class ProjectGroup(BaseEntity):
+    """
+    项目分组
+    """
+
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='分组名称', max_length=32,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
@@ -164,8 +247,11 @@ class ProjectGroup(BaseEntity):
         ]
 
 
-# 项目
 class Project(BaseEntity):
+    """
+    项目
+    """
+
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='项目名称', max_length=32,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
@@ -194,8 +280,11 @@ class Project(BaseEntity):
         ]
 
 
-# 测试用例
 class CaseInfo(BaseEntity):
+    """
+    测试用例
+    """
+
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='用例名称', max_length=32, unique=True,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
@@ -222,7 +311,8 @@ class CaseInfo(BaseEntity):
     check_status = models.BooleanField(verbose_name='是否校验 Http 状态', default=False)
     run = models.BooleanField(verbose_name='是否运行', default=True)
     owner = models.IntegerField(verbose_name='拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
-    developer = models.IntegerField(verbose_name='接口开发者', default=0, validators=[MinValueValidator(1, message='最小值为 1')])
+    developer = models.IntegerField(verbose_name='接口开发者', default=0,
+                                    validators=[MinValueValidator(1, message='最小值为 1')])
     notify = models.BooleanField(verbose_name='是否通知开发者', default=False)
     project_id = models.IntegerField(verbose_name='关联项目 id', validators=[MinValueValidator(1, message='最小值为 1')])
     sort = models.IntegerField(verbose_name='接口排序', default=0, validators=[MinValueValidator(1, message='最小值为 1')])
@@ -242,8 +332,11 @@ class CaseInfo(BaseEntity):
         ]
 
 
-# 测试记录
 class Record(BaseEntity):
+    """
+    测试记录
+    """
+
     id = models.AutoField(primary_key=True)
     group_id = models.IntegerField(verbose_name='分组 id', default=0, validators=[MinValueValidator(1, message='最小值为 1')])
     project_id = models.IntegerField(verbose_name='关联项目 id', validators=[MinValueValidator(1, message='最小值为 1')])
@@ -265,8 +358,11 @@ class Record(BaseEntity):
         ]
 
 
-# 测试报告
 class Report(BaseEntity):
+    """
+    测试报告
+    """
+
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='用例名称', max_length=32, unique=True,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
@@ -293,7 +389,8 @@ class Report(BaseEntity):
     check_status = models.BooleanField(verbose_name='是否校验 Http 状态', default=False)
     run = models.BooleanField(verbose_name='是否运行', default=True)
     owner = models.IntegerField(verbose_name='拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
-    developer = models.IntegerField(verbose_name='接口开发者', default=0, validators=[MinValueValidator(1, message='最小值为 1')])
+    developer = models.IntegerField(verbose_name='接口开发者', default=0,
+                                    validators=[MinValueValidator(1, message='最小值为 1')])
     notify = models.BooleanField(verbose_name='是否通知开发者', default=False)
     project_id = models.IntegerField(verbose_name='关联项目 id',
                                      validators=[MinValueValidator(1, message='最小值为 1')])

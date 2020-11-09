@@ -1,4 +1,5 @@
 import json
+import struct
 
 from django.db.models import QuerySet
 from django.http import QueryDict
@@ -116,17 +117,6 @@ def page_params_dict(data, *args):
     return result
 
 
-if __name__ == '__main__':
-    data = {
-        'page': 1,
-        'page_size': 10,
-        'name': 'abc',
-        'addr': 'def'
-    }
-    page, page_size, name = page_params_dict(data, 'name').values()
-    print(page, page_size, name)
-
-
 def page_params(data, *args):
     """
     取分页查询参数
@@ -165,49 +155,55 @@ def update_fields(obj, always=False, **kwargs):
 
 # --------------------------------------------- 对 Django 的 QuerySet 进行封装 -------------------------------------------
 
-def contains(obj, **kwargs):
+def str_is_none(source):
     """
-    所有字段模糊查询
+    判断字符串不为空
     """
-
-    if obj is None or kwargs is None or not isinstance(obj, QuerySet):
-        return obj
-    query_dict = {}
-    for key, value in kwargs.items():
-        if value:
-            # 拼上 QuerySet 的模糊后缀 __contains
-            query_dict.update({key + '__contains': value})
-    obj = obj.filter(**query_dict)
-    return obj
+    if source == '' or source == 'NULL' or source == 'None' or source is None:
+        return True
+    return False
 
 
-def exact(obj, **kwargs):
+def get_value(source, steps):
     """
-    所有字段精确匹配
+    根据入参字典以及取值步骤取出结果
+
+    取值步骤为 . 连接，如：data.records.0.name 含义为取 data 下 records 列表的第 0 条的 name 字段的值
     """
+    # 分割取值步骤为列表
+    keys = steps.split(".")
+    try:
+        # 循环取值步骤字典
+        for i in range(0, len(keys)):
+            # 取字段值
+            key = keys[i]
+            # 如果为数字则转为数字(数字代表从列表取值)，否则为字符
+            key = key if not key.isdigit() else int(key)
+            # 从结果字典取值
+            source = source[key]
+    # 出现异常直接填充为空字符
+    except KeyError:
+        return None
+    return source
 
-    if obj is None or kwargs is None or not isinstance(obj, QuerySet):
-        return obj
-    query_dict = {}
-    for key, value in kwargs.items():
-        if value:
-            # 拼上 QuerySet 的模糊后缀 __exact
-            query_dict.update({key + '__exact': value})
-    obj = obj.filter(**query_dict)
-    return obj
 
-
-def iexact(obj, **kwargs):
-    """
-    所有字段忽略大小写精确匹配
-    """
-
-    if obj is None or kwargs is None or not isinstance(obj, QuerySet):
-        return obj
-    query_dict = {}
-    for key, value in kwargs.items():
-        if value:
-            # 拼上 QuerySet 的模糊后缀 __iexact
-            query_dict.update({key + '__iexact': value})
-    obj = obj.filter(**query_dict)
-    return obj
+def set_value(value, target, steps):
+    # 以 . 分割插入步骤为数组
+    keys = steps.split(".")
+    # 循环找到对应位置插入
+    for i in range(0, len(keys)):
+        key = keys[i]
+        # 如果当前步骤为字符串类型的数字，转为 int
+        key = key if not key.isdigit() else int(key)
+        # 取到最后了，直接将值插入该位置
+        if i == len(keys) - 1:
+            target[key] = value
+        # 否则继续往下找插入位置
+        else:
+            try:
+                # 从目标中取当前 key 对应的值为下一次的目标
+                target = target[key]
+            except KeyError:
+                # 报错则下一次目标为空字典
+                target.update({key: {}})
+                target = target[key]
