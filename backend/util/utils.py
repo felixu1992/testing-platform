@@ -1,12 +1,8 @@
 import json
-import struct
-
-from django.db.models import QuerySet
 from django.http import QueryDict
 from backend.util.jwt_token import UserHolder
 from testing_platform.settings import LOGGER
-from backend.exception.error_code import ErrorCode
-from backend.exception.exception import PlatformError
+from backend.exception import ErrorCode, PlatformError
 
 
 def full_data(request, method):

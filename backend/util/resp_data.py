@@ -3,7 +3,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Model
 from django.forms import model_to_dict
 from django.http.response import JsonResponse
-from ..exception.error_code import ErrorCode
+from backend.exception import ErrorCode
 
 
 class ExtendedEncoder(DjangoJSONEncoder):

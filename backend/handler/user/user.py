@@ -2,17 +2,14 @@ import hashlib
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from backend.models import User
-from backend.util.resp_data import Response
-from backend.util.jwt_token import Security
-from backend.util.jwt_token import UserHolder
-from backend.util import utils
+from backend.util import Security, UserHolder, Response, full_data
 from django.core.cache import cache
 from backend.exception.exception import PlatformError
-from backend.exception.error_code import ErrorCode
+from backend.exception import ErrorCode
 
 
 def login(request):
-    body = utils.full_data(request, 'POST')
+    body = full_data(request, 'POST')
     # 邮箱，密码
     email = body['email']
     password = body['password']

@@ -1,8 +1,5 @@
-from django.shortcuts import HttpResponseRedirect
 from backend.util.jwt_token import UserHolder
-from backend.exception.exception import PlatformError
-from backend.exception.exception import ValidateError
-from backend.exception.error_code import ErrorCode
+from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.util.resp_data import Response
 from testing_platform.settings import LOGGER
 from django.core.cache import cache
@@ -12,6 +9,7 @@ try:
     from django.utils.deprecation import MiddlewareMixin
 except ImportError:
     MiddlewareMixin = object
+
 
 class RequestMiddleware(MiddlewareMixin):
     def process_request(self, request):

@@ -1,13 +1,10 @@
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
 
-from backend.exception.error_code import ErrorCode
-from backend.exception.exception import ValidateError, PlatformError
+from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.handler.project import project
 from backend.models import ProjectGroup
-from backend.util.jwt_token import UserHolder
-from backend.util.resp_data import Response
-from backend.util.utils import full_data, get_params, page_params
+from backend.util import UserHolder, Response, full_data, get_params, page_params
 
 
 def create(request):

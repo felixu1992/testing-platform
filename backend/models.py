@@ -6,8 +6,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import QuerySet
 from django.db.models.manager import BaseManager
-from backend.exception.error_code import ErrorCode
-from backend.exception.exception import ValidateError
+from backend.exception import ErrorCode, ValidateError
 
 
 class PlatformQuerySet(QuerySet):
