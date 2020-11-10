@@ -1,9 +1,9 @@
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from backend.exception import ErrorCode, ValidateError, PlatformError
-from backend.handler.contactor import contactor
+from backend.handler import contactor
 from backend.models import ContactorGroup
-from backend.util import UserHolder, Response, get_params, full_data, page_params_dict
+from backend.util import UserHolder, Response, get_params_dict, full_data, page_params_dict, update_fields
 
 
 def create(request):
@@ -42,10 +42,9 @@ def update(request):
     """
 
     body = full_data(request, 'PUT')
-    id, name = get_params(body, 'id', 'name')
+    id, name = get_params_dict(body, 'id', 'name').values()
     group = get_by_id(id)
-    if name:
-        group.name = name
+    update_fields(group, name=name)
     try:
         group.full_clean()
     except ValidationError as e:

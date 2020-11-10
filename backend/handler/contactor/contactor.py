@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.models import Contactor
-from backend.util import UserHolder, Response, page_params, get_params, full_data
+from backend.util import UserHolder, Response, page_params, full_data, get_params_dict, update_fields, page_params_dict
 
 
 def create(request):
@@ -38,14 +38,9 @@ def update(request):
     """
 
     data = full_data(request, 'PUT')
-    id, name, phone, email = get_params(data, 'id', 'name', 'phone', 'email')
-    contractor = get_by_id(id)
-    if name:
-        contractor.name = name
-    if phone:
-        contractor.phone = phone
-    if email:
-        contractor.email = email
+    params_dict = get_params_dict(data, 'id', 'name', 'phone', 'email')
+    contractor = get_by_id(params_dict['id'])
+    update_fields(contractor, **params_dict)
     try:
         contractor.full_clean()
     except ValidationError as e:
@@ -66,14 +61,8 @@ def page(request):
     """
 
     data = full_data(request, 'GET')
-    page, page_size, name, phone, email = page_params(data, 'name', 'phone', 'email')
-    contactors = Contactor.objects.filter(owner=UserHolder.current_user())
-    if name:
-        contactors = contactors.filter(name__contains=name)
-    if phone:
-        contactors = contactors.filter(phone__contains=phone)
-    if email:
-        contactors = contactors.filter(email__contains=email)
+    page, page_size, name, phone, email = page_params_dict(data, 'name', 'phone', 'email').values()
+    contactors = Contactor.objects.filter(owner=UserHolder.current_user()).contains(name=name, phone=phone, email=email)
     page_contactors = Paginator(contactors, page_size)
     page_contactors.page(page)
     return Response.success(page_contactors)

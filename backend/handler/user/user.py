@@ -2,17 +2,16 @@ import hashlib
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from backend.models import User
-from backend.util import Security, UserHolder, Response, full_data
+from backend.util import Security, UserHolder, Response, full_data, get_params_dict
 from django.core.cache import cache
 from backend.exception.exception import PlatformError
 from backend.exception import ErrorCode
 
 
 def login(request):
-    body = full_data(request, 'POST')
+    data = full_data(request, 'POST')
     # 邮箱，密码
-    email = body['email']
-    password = body['password']
+    email, password = get_params_dict(data, 'email', 'password')
     # 密码 md5
     # TODO 前端 md5 更加安全
     hl = hashlib.md5()
@@ -44,3 +43,6 @@ def logout(request):
         # 直接过期
         cache.expire(0)
     return HttpResponseRedirect('/')
+
+
+# -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
