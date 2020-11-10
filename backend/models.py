@@ -257,7 +257,6 @@ class Project(BaseEntity):
                                         MaxLengthValidator(32, message='最大长度为 32')])
     remark = models.CharField(verbose_name='项目备注', max_length=255, default=None,
                               validators=[MaxLengthValidator(255, message='最大长度为 255')])
-    cookies = models.JSONField(verbose_name='Cookie', blank=True, null=True)
     headers = models.JSONField(verbose_name='请求头', blank=True, null=True)
     host = models.CharField(verbose_name='项目统一 host', max_length=255, blank=True, null=True)
     owner = models.IntegerField(verbose_name='项目拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
@@ -339,7 +338,7 @@ class Record(BaseEntity):
     id = models.AutoField(primary_key=True)
     group_id = models.IntegerField(verbose_name='分组 id', default=0, validators=[MinValueValidator(1, message='最小值为 1')])
     project_id = models.IntegerField(verbose_name='关联项目 id', validators=[MinValueValidator(1, message='最小值为 1')])
-    remark = models.CharField(verbose_name='记录描述', max_length=255,
+    remark = models.CharField(verbose_name='记录描述', max_length=255, default=None,
                               validators=[MinLengthValidator(1, message='最小长度为 1'),
                                           MaxLengthValidator(255, message='最大长度为 255')])
     owner = models.IntegerField(verbose_name='拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
@@ -365,7 +364,7 @@ class Report(BaseEntity):
     测试报告
     """
 
-    id = models.IntegerField(verbose_name='等同于用例 id', default=0,
+    id = models.IntegerField(verbose_name='等同于用例 id', default=0, primary_key=True,
                              validators=[MinValueValidator(1, message='最小值为 1')])
     name = models.CharField(verbose_name='用例名称', max_length=32, unique=True,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),

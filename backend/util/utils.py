@@ -1,7 +1,7 @@
 import json
 from django.http import QueryDict
 from backend.util.jwt_token import UserHolder
-from testing_platform.settings import LOGGER
+from backend import LOGGER
 from backend.exception import ErrorCode, PlatformError
 
 
@@ -147,3 +147,13 @@ def update_fields(obj, always=False, **kwargs):
         # 只更新非空值
         elif not always and value:
             setattr(obj, field, value)
+
+
+def filter_obj_single(objs, key, value):
+    """
+    通过对象中的某个 key 过滤列表对象
+
+    只返回一个
+    """
+    obj = [obj for obj in objs if getattr(obj, key) == value]
+    return obj[0]

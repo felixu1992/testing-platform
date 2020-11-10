@@ -1,7 +1,7 @@
 from backend.util.jwt_token import UserHolder
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.util.resp_data import Response
-from testing_platform.settings import LOGGER
+from backend import LOGGER
 from django.core.cache import cache
 
 try:
