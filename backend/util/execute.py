@@ -1,4 +1,9 @@
-from backend.models import Record
+import json
+import re
+import time
+import requests
+from requests import Response
+from testing_platform.settings import LOGGER
 from backend.models import Report
 
 
@@ -47,6 +52,11 @@ def set_value(value, target, steps):
                 target = target[key]
 
 
+content_type = 'Content-Type'
+json_type = 'application/json'
+form_type = 'multipart/form-data'
+
+
 class Executor:
 
     def __init__(self, case_infos, project):
@@ -59,23 +69,23 @@ class Executor:
     def execute(self):
         """
         执行用例
-
-        循环执行用例
-        处理用例结果
-        生成用例报告
         """
 
         # 循环执行用例
+        # TODO 验证引用传值，是否可以直接返回 self.reports
+        reports = []
         if self.case_infos and len(self.case_infos) > 0:
+            for case_info in self.case_infos:
+                reports.append(self.__do_execute(case_info))
+        return reports
 
-
-    def do_execute(self):
+    def __do_execute(self, case_info):
         """
         执行请求
         """
 
         # 构建请求参数
-        request = self.__build_request()
+        request = self.__build_request(case_info)
         if request:
             url, headers, params, files, result = request
         else:
@@ -83,36 +93,47 @@ class Executor:
         # 请求开始时间
         start = time.time()
         # 请求
-        result = self.__do_request(url, headers, params, files, result)
+        result = self.__do_request(url, headers, params, files, result, case_info.method)
         # 计算请求耗时
         time_used = int((time.time() - start) * 1000)
-        self.case_info.time_used = time_used
+        # 过滤出结果
+        ci = [ci for ci in self.case_infos if getattr(ci, 'id') == case_info.id]
+        # 如果为空则添加一个结果
+        if len(ci) == 0 or ci[0] is None:
+            # TODO 验证对象是否传递了引用，按理说是
+            report = Report(case_info.__dict__.copy())
+            self.reports.append(report)
+            ci.append(report)
+        report = ci[0]
+        report.time_used = time_used
         # 填充结果到用例对象中
-        self.case_info.response_content = json.dumps(result, ensure_ascii=False)
+        report.response_content = json.dumps(result, ensure_ascii=False)
         code = result['code']
         # 防止 code 为字符串类型的数字
-        self.case_info.response_code = code if isinstance(code, int) else int(code)
+        report.response_code = code if isinstance(code, int) else int(code)
         # 校验结果
-        self.__check_status(result, case_infos)
+        self.__check_status(report, result)
         # print 结果
-        self.__print_result(url)
-        return result
+        self.__print_result(report, url)
+        return report
 
-    def __build_request(self):
+    def __build_request(self, case_info):
         # 得到请求参数
-        params = self.case_info.params
+        # TODO 需要处理参数占位符
+        params = case_info.params
         # 定义一个字典，在文件上传时使用
         files = {}
         # 构建请求头
         headers = {}
-        if self.case_info.headers:
-            headers.update(self.case_info.headers)
+        # TODO 填充项目特有请求头，cookie 等信息
+        if case_info.headers:
+            headers.update(case_info)
         # 请求头没有 Content-Type 默认 json
         if content_type not in headers or headers[content_type] == json_type:
             # 设置为 json
             headers.update({content_type: json_type})
             # 将字典转为字符串
-            params = json.dumps(self.case_info.params).encode('utf-8').decode('latin-1')
+            params = json.dumps(case_info.params).encode('utf-8').decode('latin-1')
         # 有 multipart/form-data 的 Content-Type 认为很有可能有文件上传
         elif headers[content_type] == form_type:
             # 上传文件时不需要显示设置 Content-Type
@@ -130,35 +151,38 @@ class Executor:
                         files.update({param: None})
         # 预先构建结果
         result = {'code': '-1'}
-        self.case_info.status = 'failed'
+        case_info.status = 'failed'
         # 构建 url
-        if str_is_none(self.case_info.host):
+        # TODO 填充项目的，需要考虑没有项目，单独执行某一个接口的情况
+        if case_info.host is None:
             result.update({'message': 'host 不能为空'})
-            self.case_info.response_content = '请求路径缺失，接口未执行'
+            case_info.response_content = '请求路径缺失，接口未执行'
             return None
-        url = self.case_info.host + self.case_info.path
+        # TODO 需要处理 url 占位符
+        url = case_info.host + case_info.path
         return url, headers, params, files, result
 
-    def __do_request(self, url, headers, params, files, result):
+    def __do_request(self, url, headers, params, files, result, method):
         """
         实际请求用例
         """
+        # TODO 判断是否执行
         # 请求接口
         try:
             # POST
-            if self.case_info.method == 'post':
+            if method == 'post':
                 response = requests.post(url, data=params, headers=headers, files=files)
                 result = response.json()
             # GET
-            elif self.case_info.method == "get":
+            elif method == "get":
                 response = requests.get(url, data=params, headers=headers)
                 result = response.json()
             # DELETE
-            elif self.case_info.method == "delete":
+            elif method == "delete":
                 response = requests.delete(url, data=params, headers=headers)
                 result = response.json()
             # PUT
-            elif self.case_info.method == "put":
+            elif method == "put":
                 response = requests.put(url, data=params, headers=headers)
                 result = response.json()
             # 未知方法
@@ -173,7 +197,7 @@ class Executor:
             result.update({'message': '请求失败，请检查用例的请求路径、请求方法、请求参数是否正确'})
         return result
 
-    def __check_status(self, result, case_infos):
+    def __check_status(self, report, result):
         """
         校验结果
 
@@ -182,15 +206,16 @@ class Executor:
         实际值为另一个字典
         对比字典内容是否一致，从而确定结果是否符合预期
         """
+        # TODO 先判断是否需要校验 HTTP CODE，如果需要，且校验失败，则后续直接忽略
         # 定义预期和结果字典
         expected = {}
         response = {}
         # 预期字段以 , 分割为预期字段的列表
-        expected_keys = self.case_info.expected_key.split(',')
+        expected_keys = report.expected_key.split(',')
         # 预期结果以 , 分割为预期结果的列表
-        expected_values = str(self.case_info.expected_value).split(',')
+        expected_values = str(report.expected_value).split(',')
         # 校验步骤以 , 分割为列表
-        check_steps = self.case_info.check_step.split(',')
+        check_steps = report.check_step.split(',')
         # 循环预期字段的个数
         for i in range(0, len(expected_keys)):
             # 将预期字段对应的预期值以 : 分割，得到预期值的取值过程列表
@@ -201,11 +226,11 @@ class Executor:
                 expected.update({expected_keys[i]: row_steps[0]})
             else:
                 # 取依赖的行数据
-                ci = [ci for ci in case_infos if getattr(ci, 'row') == int(row_steps[0])]
+                ci = [ci for ci in self.reports if getattr(ci, 'id') == int(row_steps[0])]
                 ci = ci[0]
                 # 没取到直接判定失败
                 if not ci:
-                    self.case_info.status = 'failed'
+                    report.status = 'failed'
                     return
                 # 否则按照依赖步骤取出依赖值，填充预期字典
                 ci = json.loads(getattr(ci, 'response_content'))
@@ -214,22 +239,21 @@ class Executor:
             response.update({expected_keys[i]: str(get_value(result, check_steps[i]))})
         # 填入结果
         if expected == response:
-            self.case_info.status = 'passed'
+            report.status = 'passed'
         else:
-            self.case_info.status = 'failed'
+            report.status = 'failed'
 
-    def __print_result(self, url):
+    def __print_result(self, report, url):
         """
         打印请求结果
         """
-        out = json.dumps({'用例行号': self.case_info.row, '用例': self.case_info.description, '步骤': self.case_info.step,
-                          '请求方式': self.case_info.method, '请求路径': url, '请求结果': self.case_info.status}, indent=2,
-                         ensure_ascii=False)
-        if self.case_info.status == 'passed':
+        out = json.dumps({'用例名称': report.name, '用例描述': report.description, '请求方式': report.method, '请求路径': url,
+                          '请求结果': report.status}, indent=2, ensure_ascii=False)
+        if report.status == 'passed':
             out = out.replace('passed', '\033[0;33;42m' + 'passed' + '\033[0m')
         else:
             out = out.replace('failed', '\033[0;37;41m' + 'failed' + '\033[0m')
-        print(out, flush=True)
+        LOGGER.info(out)
 
     def parse_param(self, case_info):
         """
@@ -239,7 +263,7 @@ class Executor:
         """
         # 获取当前用例的 params
         params = getattr(case_info, 'params')
-        params = {} if str_is_none(params) else json.loads(params)
+        params = {} if params is None else json.loads(params)
         # 取当前用例的 ex_keys
         ex_keys = getattr(case_info, 'ex_keys')
         # 如果有需要处理的占位符
