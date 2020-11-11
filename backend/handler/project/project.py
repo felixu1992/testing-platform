@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.models import Project
-from backend.util import UserHolder, Response, full_data, get_params, page_params
+from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params
 
 
 def create(request):
@@ -10,7 +10,7 @@ def create(request):
     创建项目
     """
 
-    body = full_data(request, 'POST')
+    body = parse_data(request, 'POST')
     project = Project(**body)
     try:
         project.full_clean()
@@ -30,7 +30,7 @@ def delete(request, id):
     3. 删除对应项目的历史报告(或者不删，让他有个后悔机会还能找回接口)
     """
 
-    full_data(request, 'DELETE')
+    parse_data(request, 'DELETE')
     project = get_by_id(id)
     project.delete()
     # TODO 删用例和报告
@@ -42,20 +42,10 @@ def update(request):
     修改项目信息
     """
 
-    data = full_data(request, 'PUT')
-    id, name, remark, cookies, headers, host = get_params(data, 'id', 'name', 'remark', 'cookies', 'headers', 'host',
-                                                          toleration=True)
-    project = get_by_id(id)
-    if name:
-        project.name = name
-    if remark:
-        project.remark = remark
-    if cookies:
-        project.cookies = cookies
-    if headers:
-        project.headers = headers
-    if host:
-        project.host = host
+    data = parse_data(request, 'PUT')
+    params = get_params(data, 'id', 'name', 'remark', 'cookies', 'headers', 'host', toleration=True)
+    project = get_by_id(params['id'])
+    update_fields(project, **params)
     try:
         project.full_clean()
     except ValidationError as e:
@@ -73,13 +63,9 @@ def page(request):
     可传入 name 模糊
     """
 
-    data = full_data(request, 'GET')
-    page, page_size, name, group_id = page_params(data, 'name', 'group_id')
-    projects = Project.objects.filter(owner=UserHolder.current_user())
-    if name:
-        projects = projects.filter(name__contains=name)
-    if group_id:
-        projects = projects.filter(group_id=group_id)
+    data = parse_data(request, 'GET')
+    page, page_size, name, group_id = page_params(data, 'name', 'group_id').values()
+    projects = Project.objects.filter(owner=UserHolder.current_user()).exact(group_id=group_id).contains(name=name)
     page_projects = Paginator(projects, page_size)
     page_projects.page(page)
     return Response.success(projects)
@@ -90,7 +76,7 @@ def detail(request, id):
     根据 id 查询项目详细信息
     """
 
-    full_data(request, 'GET')
+    parse_data(request, 'GET')
     return Response.success(get_by_id(id))
 
 

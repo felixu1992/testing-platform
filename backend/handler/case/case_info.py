@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.models import CaseInfo
-from backend.util import UserHolder, Response, full_data, page_params_dict, get_params_dict, update_fields
+from backend.util import UserHolder, Response, parse_data, page_params, get_params, update_fields
 
 
 def create(request):
@@ -10,7 +10,7 @@ def create(request):
     新增用例
     """
 
-    body = full_data(request, 'POST')
+    body = parse_data(request, 'POST')
     case_info = CaseInfo(**body)
     try:
         case_info.full_clean()
@@ -27,7 +27,7 @@ def delete(request, id):
     前端需要二次确认
     """
 
-    full_data(request, 'DELETE')
+    parse_data(request, 'DELETE')
     project = get_by_id(id)
     project.delete()
     return Response.def_success()
@@ -38,10 +38,9 @@ def update(request):
     修改项目信息
     """
 
-    data = full_data(request, 'PUT')
-    param_dict = get_params_dict(data, 'id', 'name', 'remark', 'host', 'path', 'params',
-                                 'extend_keys', 'extend_values', 'headers',
-                                 'expected_http_status', 'check_status', 'run', 'developer', 'notify', 'sort')
+    data = parse_data(request, 'PUT')
+    param_dict = get_params(data, 'id', 'name', 'remark', 'host', 'path', 'params', 'extend_keys', 'extend_values',
+                            'headers', 'expected_http_status', 'check_status', 'run', 'developer', 'notify', 'sort')
     project = get_by_id(param_dict['id'])
     update_fields(project, **param_dict)
     try:
@@ -65,10 +64,9 @@ def page(request):
     可传入 developer 精确匹配
     """
 
-    data = full_data(request, 'GET')
-    page, page_size, project_id, name, path, method, run, developer = page_params_dict(data, 'project_id', 'name',
-                                                                                       'path', 'method', 'run',
-                                                                                       'developer').values()
+    data = parse_data(request, 'GET')
+    page, page_size, project_id, name, path, method, run, developer = page_params(data, 'project_id', 'name', 'path',
+                                                                                  'method', 'run', 'developer').values()
     if project_id is None:
         raise PlatformError.error_args(ErrorCode.MISSING_NECESSARY_KEY, 'project_id')
     case_infos = CaseInfo.objects.filter(owner=UserHolder.current_user(), project_id=project_id)\
@@ -83,7 +81,7 @@ def detail(request, id):
     根据 id 查询用例详细信息
     """
 
-    full_data(request, 'GET')
+    parse_data(request, 'GET')
     return Response.success(get_by_id(id))
 
 

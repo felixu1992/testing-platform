@@ -5,9 +5,9 @@ from backend import LOGGER
 from backend.exception import ErrorCode, PlatformError
 
 
-def full_data(request, method):
+def parse_data(request, method):
     """
-    从请求中获取请求体
+    从请求中解析请求体得到数据
     """
 
     # 判断请求方法是否符合要求
@@ -45,36 +45,6 @@ def get_params(data, *args, toleration=True):
     if data is None or not isinstance(data, dict) or args is None:
         raise PlatformError.error(ErrorCode.VALIDATION_ERROR)
     # 结果集
-    values = []
-    # 遍历需要取出的关键字
-    for param in args:
-        try:
-            # 取出结果并追加
-            value = data[param]
-            values.append(value)
-        except KeyError:
-            # 字典中不存在，容忍则追加 None
-            if toleration:
-                LOGGER.info('参数获取失败，填充为 None，data={}，中不包含 {}', data, param)
-                values.append(None)
-            # 不容忍则报错
-            else:
-                LOGGER.error('参数获取失败，data={}，中不包含 {}', data, param)
-                raise PlatformError.error_args(ErrorCode.MISSING_NECESSARY_KEY, param)
-    return values
-
-
-def get_params_dict(data, *args, toleration=True):
-    """
-    从字典 data 中取 args 中的字段值
-
-    容忍度决定着是否报错
-    """
-
-    # 作为取值函数，data 和 args 理应均不为空
-    if data is None or not isinstance(data, dict) or args is None:
-        raise PlatformError.error(ErrorCode.VALIDATION_ERROR)
-    # 结果集
     result = {}
     # 遍历需要取出的关键字
     for param in args:
@@ -94,25 +64,6 @@ def get_params_dict(data, *args, toleration=True):
     return result
 
 
-def page_params_dict(data, *args):
-    """
-    取分页查询参数
-
-    一般分页查询对所有可查询参数均容忍不存在
-    分页参数不存在的话默认使用 page 为 1，page_size 为 10 作为分页条件
-    """
-
-    # 取字典中的分页参数
-    result = get_params_dict(data, 'page', 'page_size', *args)
-    # 不存在则填充默认值
-    # if page is None or int(page) <= 0:
-    #     page = 1
-    # if page_size is None or int(page_size) <= 0:
-    #     page_size = 10
-    # return page, page_size, *values
-    return result
-
-
 def page_params(data, *args):
     """
     取分页查询参数
@@ -122,13 +73,20 @@ def page_params(data, *args):
     """
 
     # 取字典中的分页参数
-    page, page_size, *values = get_params(data, 'page', 'page_size', *args)
-    # 不存在则填充默认值
-    if page is None or int(page) <= 0:
-        page = 1
-    if page_size is None or int(page_size) <= 0:
-        page_size = 10
-    return page, page_size, *values
+    result = get_params(data, 'page', 'page_size', *args)
+    try:
+        page = result['page']
+        if page is None or int(page) <= 0:
+            result['page'] = 1
+    except KeyError:
+        result.update({'page': 1})
+    try:
+        page_size = result['page_size']
+        if page_size is None or int(page_size) <= 0:
+            result['page_size'] = 10
+    except KeyError:
+        result.update({'page_size': 10})
+    return result
 
 
 def update_fields(obj, always=False, **kwargs):

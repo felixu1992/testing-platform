@@ -2,16 +2,16 @@ import hashlib
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from backend.models import User
-from backend.util import Security, UserHolder, Response, full_data, get_params_dict
+from backend.util import Security, UserHolder, Response, parse_data, get_params
 from django.core.cache import cache
 from backend.exception.exception import PlatformError
 from backend.exception import ErrorCode
 
 
 def login(request):
-    data = full_data(request, 'POST')
+    data = parse_data(request, 'POST')
     # 邮箱，密码
-    email, password = get_params_dict(data, 'email', 'password')
+    email, password = get_params(data, 'email', 'password').values()
     # 密码 md5
     # TODO 前端 md5 更加安全
     hl = hashlib.md5()

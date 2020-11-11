@@ -3,7 +3,7 @@ from django.core.paginator import Paginator
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.handler import contactor
 from backend.models import ContactorGroup
-from backend.util import UserHolder, Response, get_params_dict, full_data, page_params_dict, update_fields
+from backend.util import UserHolder, Response, get_params, parse_data, page_params, update_fields
 
 
 def create(request):
@@ -11,7 +11,7 @@ def create(request):
     创建联系人分组
     """
 
-    body = full_data(request, 'POST')
+    body = parse_data(request, 'POST')
     group = ContactorGroup(**body)
     try:
         group.full_clean()
@@ -26,7 +26,7 @@ def delete(request, id):
     根据 id 删除联系人分组
     """
 
-    full_data(request, 'DELETE')
+    parse_data(request, 'DELETE')
     group = get_by_id(id)
     # 判断是否被联系人使用
     count = contactor.count_by_group(id)
@@ -41,8 +41,8 @@ def update(request):
     修改联系人分组
     """
 
-    body = full_data(request, 'PUT')
-    id, name = get_params_dict(body, 'id', 'name').values()
+    body = parse_data(request, 'PUT')
+    id, name = get_params(body, 'id', 'name').values()
     group = get_by_id(id)
     update_fields(group, name=name)
     try:
@@ -60,8 +60,8 @@ def page(request):
     可根据 name 做模糊
     """
 
-    data = full_data(request, 'GET')
-    page, page_size, name = page_params_dict(data, 'name').values()
+    data = parse_data(request, 'GET')
+    page, page_size, name = page_params(data, 'name').values()
     groups = ContactorGroup.objects.filter(owner=UserHolder.current_user()).contains(name=name)
     page_group = Paginator(groups, page_size)
     page_group.page(page)

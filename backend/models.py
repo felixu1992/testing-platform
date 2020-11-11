@@ -19,41 +19,41 @@ class PlatformQuerySet(QuerySet):
         所有字段模糊查询
         """
 
-        if kwargs is None:
-            raise ValidateError.error(ErrorCode.MISSING_NECESSARY_KEY, 'kwargs')
-        query_dict = {}
-        for key, value in kwargs.items():
-            if value:
-                # 拼上 QuerySet 的模糊后缀 __contains
-                query_dict.update({key + '__contains': value})
-        return self.filter(**query_dict)
+        return self.__update(operation='__contains', **kwargs)
 
     def exact(self, **kwargs):
         """
         所有字段精确匹配
         """
 
-        if kwargs is None:
-            raise ValidateError.error(ErrorCode.MISSING_NECESSARY_KEY, 'kwargs')
-        query_dict = {}
-        for key, value in kwargs.items():
-            if value:
-                # 拼上 QuerySet 的精确后缀 __exact
-                query_dict.update({key + '__exact': value})
-        return self.filter(**query_dict)
+        return self.__update(operation='__exact', **kwargs)
 
     def iexact(self, **kwargs):
         """
         所有字段忽略大小写精确匹配
         """
 
+        return self.__update(operation='__iexact', **kwargs)
+
+    def fields_in(self, **kwargs):
+        """
+        In 查询
+        """
+
+        return self.__update(operation='__in', **kwargs)
+
+    def __update(self, operation, **kwargs):
+        """
+        对字典进行更新
+        """
+
         if kwargs is None:
             raise ValidateError.error(ErrorCode.MISSING_NECESSARY_KEY, 'kwargs')
         query_dict = {}
         for key, value in kwargs.items():
             if value:
-                # 拼上 QuerySet 的忽略大小写精确后缀 __iexact
-                query_dict.update({key + '__iexact': value})
+                # 拼上 QuerySet 字段属性
+                query_dict.update({key + operation: value})
         return self.filter(**query_dict)
 
 

@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.models import Contactor
-from backend.util import UserHolder, Response, page_params, full_data, get_params_dict, update_fields, page_params_dict
+from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params
 
 
 def create(request):
@@ -10,7 +10,7 @@ def create(request):
     创建联系人
     """
 
-    body = full_data(request, 'POST')
+    body = parse_data(request, 'POST')
     contactor = Contactor(**body)
     try:
         contactor.full_clean()
@@ -25,7 +25,7 @@ def delete(request, id):
     根据 id 删除联系人
     """
 
-    full_data(request, 'DELETE')
+    parse_data(request, 'DELETE')
     contactor = get_by_id(id)
     # TODO 判断是否被用例使用
     contactor.delete()
@@ -37,8 +37,8 @@ def update(request):
     修改联系人
     """
 
-    data = full_data(request, 'PUT')
-    params_dict = get_params_dict(data, 'id', 'name', 'phone', 'email')
+    data = parse_data(request, 'PUT')
+    params_dict = get_params(data, 'id', 'name', 'phone', 'email')
     contractor = get_by_id(params_dict['id'])
     update_fields(contractor, **params_dict)
     try:
@@ -60,8 +60,8 @@ def page(request):
     可传入 email 模糊
     """
 
-    data = full_data(request, 'GET')
-    page, page_size, name, phone, email = page_params_dict(data, 'name', 'phone', 'email').values()
+    data = parse_data(request, 'GET')
+    page, page_size, name, phone, email = page_params(data, 'name', 'phone', 'email').values()
     contactors = Contactor.objects.filter(owner=UserHolder.current_user()).contains(name=name, phone=phone, email=email)
     page_contactors = Paginator(contactors, page_size)
     page_contactors.page(page)

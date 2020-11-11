@@ -1,9 +1,9 @@
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from backend.exception import ErrorCode, ValidateError, PlatformError
-from backend.handler.file import file
+from backend.handler import file
 from backend.models import FileGroup
-from backend.util import UserHolder, Response, full_data, get_params, page_params
+from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params
 
 
 def create(request):
@@ -11,7 +11,7 @@ def create(request):
     创建文件分组
     """
 
-    body = full_data(request, 'POST')
+    body = parse_data(request, 'POST')
     group = FileGroup(**body)
     try:
         group.full_clean()
@@ -26,7 +26,7 @@ def delete(request, id):
     根据 id 删除文件分组
     """
 
-    full_data(request, 'DELETE')
+    parse_data(request, 'DELETE')
     group = get_by_id(id)
     # 判断是否被文件使用
     count = file.count_by_group(id)
@@ -41,10 +41,10 @@ def update(request):
     修改文件分组
     """
 
-    body = full_data(request, 'PUT')
-    id, name = get_params(body, 'id', 'name')
+    body = parse_data(request, 'PUT')
+    id, name = get_params(body, 'id', 'name').values()
     group = get_by_id(id)
-    group.name = name
+    update_fields(group, name=name)
     try:
         group.full_clean()
     except ValidationError as e:
@@ -60,11 +60,9 @@ def page(request):
     可根据 name 模糊查询
     """
 
-    data = full_data(request, 'GET')
-    page, page_size, name = page_params(data, 'name')
-    groups = FileGroup.objects.filter(owner=UserHolder.current_user())
-    if name:
-        groups = groups.filter(name__contains=name)
+    data = parse_data(request, 'GET')
+    page, page_size, name = page_params(data, 'name').values()
+    groups = FileGroup.objects.filter(owner=UserHolder.current_user()).contains(name=name)
     page_group = Paginator(groups, page_size)
     page_group.page(page)
     return Response.success(page_group)

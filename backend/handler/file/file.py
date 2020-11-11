@@ -6,15 +6,15 @@ from django.http import FileResponse
 from django.utils.http import urlquote
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.models import File
-from backend.util import UserHolder, Response, full_data, get_params, page_params
-from testing_platform.settings import FILE_REPO
+from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params
+from backend import FILE_REPO
 
 
 def create(request):
     """
     创建文件
     """
-    body = full_data(request, 'POST')
+    body = parse_data(request, 'POST')
     file = File(**body)
     # 处理文件
     file.path = __file_data(request)
@@ -30,11 +30,8 @@ def delete(request, id):
     """
     根据 id 删除文件
     """
-    full_data(request, 'DELETE')
-    try:
-        file = File.objects.get(owner=UserHolder.current_user(), id=id)
-    except ObjectDoesNotExist:
-        raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
+    parse_data(request, 'DELETE')
+    file = get_by_id(id)
     # TODO 判断是否被用例使用
     file.delete()
     return Response.def_success()
@@ -44,15 +41,12 @@ def update(request):
     """
     修改联系人
     """
-    data = full_data(request, 'PUT')
-    id, name, remark = get_params(data, 'id', 'name', 'remark', toleration=True)
+    data = parse_data(request, 'PUT')
+    id, name, remark = get_params(data, 'id', 'name', 'remark', toleration=True).values()
     file = get_by_id(id)
-    file.name = name
-    file.remark = remark
     # 处理文件
     path = __file_data(request)
-    if path:
-        file.path = path
+    update_fields(file, name=name, remark=remark, path=path)
     try:
         file.full_clean()
     except ValidationError as e:
@@ -68,18 +62,16 @@ def page(request):
     可传入分组
     可传入 name 模糊
     """
-    data = full_data(request, 'GET')
-    page, page_size, name = page_params(data, 'name')
-    files = File.objects.filter(owner=UserHolder.current_user())
-    if name:
-        files = files.filter(name__contains=name)
+    data = parse_data(request, 'GET')
+    page, page_size, name = page_params(data, 'name').values()
+    files = File.objects.filter(owner=UserHolder.current_user()).contains(name=name)
     page_files = Paginator(files, page_size)
     page_files.page(page)
     return Response.success(page_files)
 
 
 def download(request, id):
-    full_data(request, 'GET')
+    parse_data(request, 'GET')
     file = get_by_id(id)
     path = file.path
     file = open(path, 'rb')

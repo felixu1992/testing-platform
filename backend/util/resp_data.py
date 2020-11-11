@@ -25,7 +25,7 @@ class ExtendedEncoder(DjangoJSONEncoder):
 def page_to_dict(obj):
     return {
         'page': obj.num_pages,
-        'page-size': obj.per_page,
+        'page_size': obj.per_page,
         'total': obj.count,
         'records': list(obj.object_list)
     }
