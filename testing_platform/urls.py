@@ -26,5 +26,11 @@ urlpatterns = (
     path('file/', include('backend.handler.file.urls')),
 
     # 项目
-    path('project/', include('backend.handler.project.urls'))
+    path('project/', include('backend.handler.project.urls')),
+
+    # 用例
+    path('case/', include('backend.handler.case.urls')),
+
+    # 记录
+    path('record/', include('backend.handler.record.urls'))
 )
