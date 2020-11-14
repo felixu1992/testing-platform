@@ -44,5 +44,7 @@ def logout(request):
         cache.expire(0)
     return HttpResponseRedirect('/')
 
+def register(request):
+    print()
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
