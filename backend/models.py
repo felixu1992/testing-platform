@@ -7,12 +7,17 @@ from django.db import models
 from django.db.models import QuerySet
 from django.db.models.manager import BaseManager
 from backend.exception import ErrorCode, ValidateError
+# from backend.util import UserHolder
 
 
 class PlatformQuerySet(QuerySet):
     """
     对原生 QuerySet 做一层封装，使其更加方便进行模糊查询、精确匹配等操作
     """
+
+    # def owner(self):
+    #
+    #     return self.filter(owner=UserHolder.current_user())
 
     def contains(self, **kwargs):
         """
