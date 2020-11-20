@@ -8,6 +8,7 @@ from django.db.models import QuerySet
 from django.db.models.manager import BaseManager
 from backend.exception import ErrorCode, ValidateError
 
+
 class PlatformQuerySet(QuerySet):
     """
     对原生 QuerySet 做一层封装，使其更加方便进行模糊查询、精确匹配等操作
@@ -94,6 +95,9 @@ class User(BaseEntity):
     username = models.CharField(verbose_name='用户名', max_length=32, unique=True,
                                 validators=[MinLengthValidator(1, message='最小长度为 1'),
                                             MaxLengthValidator(32, message='最大长度为 32')])
+    role = models.CharField(verbose_name='角色', max_length=16,
+                            validators=[MinLengthValidator(1, message='最小长度为 1'),
+                                        MaxLengthValidator(32, message='最大长度为 16')])
     email = models.CharField(verbose_name='邮箱', max_length=64, unique=True,
                              validators=[MinLengthValidator(1, message='最小长度为 1'),
                                          MaxLengthValidator(64, message='最大长度为 64'),
