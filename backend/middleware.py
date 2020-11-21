@@ -36,7 +36,7 @@ class RequestMiddleware(MiddlewareMixin):
             user_id = cache.get(token)
             # 不存在则 token 过期，跳首页
             if not user_id:
-                return Response.failed(ErrorCode.MISSING_AUTHORITY)
+                return Response.failed(ErrorCode.LOGIN_INVALID)
             # 重置过期时间
             cache.expire(token, timeout=60 * 60 * 24 * 7)
             # 缓存当前用户 id
