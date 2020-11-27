@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'drf_yasg',
+    'rest_framework',
     'backend.apps.BackendConfig'
 ]
 
@@ -48,8 +50,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'backend.middleware.RequestMiddleware',
-    'backend.middleware.ExceptionMiddleware'
+    # 'backend.middleware.RequestMiddleware',
+    # 'backend.middleware.ExceptionMiddleware'
 ]
 
 ROOT_URLCONF = 'testing_platform.urls'
