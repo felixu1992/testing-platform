@@ -34,11 +34,7 @@ schema_view = get_schema_view(
    permission_classes=(permissions.AllowAny,),
 )
 
-router = routers.DefaultRouter()
-router.register(r'test', views.TestViewSet, basename='test')
-
 urlpatterns = (
-    path('', include(router.urls)),
     # 登录登出
     path('user/', include('backend.handler.user.urls')),
 

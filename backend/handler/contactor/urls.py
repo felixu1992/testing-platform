@@ -1,16 +1,16 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework import routers
 from backend.handler.contactor import contactor, contactor_group
-
+# 联系人分组
+group_router = routers.DefaultRouter()
+group_router.register(r'group', contactor_group.ContactorGroupViewSet, basename='contactor_group')
+# 联系人
+router = routers.DefaultRouter()
+router.register(r'', contactor.ContactorViewSet, basename='contactor')
 urlpatterns = (
     # 联系人分组
-    path('group/', contactor_group.create),
-    path('group/<id>', contactor_group.delete),
-    path('group/', contactor_group.update),
-    path('group/page', contactor_group.page),
+    path('', include(group_router.urls)),
 
     # 联系人
-    path('create', contactor.create),
-    path('delete/<id>', contactor.delete),
-    path('update', contactor.update),
-    path('page', contactor.page),
+    path('', include(router.urls)),
 )
