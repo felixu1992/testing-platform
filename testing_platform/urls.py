@@ -15,20 +15,18 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.urls import path, include
-from rest_framework import permissions, routers
-from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-
-from backend import views
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions
 
 schema_view = get_schema_view(
    openapi.Info(
-      title="Snippets API",
+      title='贼牛逼的 API 文档',
       default_version='v1',
-      description="Test description",
-      terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="contact@snippets.local"),
-      license=openapi.License(name="BSD License"),
+      description='别问，反正就是贼牛逼',
+      terms_of_service='https://www.baidu.com',
+      contact=openapi.Contact(email='326554201@qq.com'),
+      license=openapi.License(name='Apache-2.0 License'),
    ),
    public=True,
    permission_classes=(permissions.AllowAny,),

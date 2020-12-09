@@ -12,5 +12,5 @@ urlpatterns = (
     path('', include(group_router.urls)),
 
     # 联系人
-    path('', include(router.urls)),
+    path('', include(router.urls))
 )

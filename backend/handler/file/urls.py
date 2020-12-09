@@ -1,17 +1,17 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework import routers
 from backend.handler.file import file, file_group
-
+# 联系人分组
+group_router = routers.DefaultRouter()
+group_router.register(r'group', file_group.FileGroupViewSet, basename='file_group')
+# 联系人
+router = routers.DefaultRouter()
+router.register(r'', file.FileViewSet, basename='file')
 urlpatterns = (
     # 文件分组
-    path('group/create', file_group.create),
-    path('group/delete/<id>', file_group.delete),
-    path('group/update', file_group.update),
-    path('group/page', file_group.page),
+    path('', include(group_router.urls)),
+
 
     # 文件管理
-    path('create', file.create),
-    path('delete/<id>', file.delete),
-    path('update', file.update),
-    path('page', file.page),
-    path('download/<id>', file.download)
+    path('', include(router.urls))
 )

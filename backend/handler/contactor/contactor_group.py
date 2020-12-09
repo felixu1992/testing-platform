@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.handler import contactor
 from backend.models import ContactorGroup
-from backend.util import UserHolder, Response, get_params, parse_data, page_params, update_fields
+from backend.util import Response, get_params, parse_data, page_params, update_fields
 
 
 class ContactorGroupSerializer(serializers.ModelSerializer):
@@ -16,6 +16,7 @@ class ContactorGroupSerializer(serializers.ModelSerializer):
 
 
 class ContactorGroupViewSet(viewsets.ModelViewSet):
+
     queryset = ContactorGroup
 
     serializer_class = ContactorGroupSerializer

@@ -15,13 +15,16 @@ class ContactorSerializer(serializers.ModelSerializer):
 
 
 class ContactorViewSet(viewsets.ModelViewSet):
+
     queryset = Contactor
 
     serializer_class = ContactorSerializer
 
     def post(self, request):
         """
-        创建联系人
+        新增联系人
+
+        创建一个新的联系人
         """
 
         body = parse_data(request, 'POST')
@@ -35,6 +38,8 @@ class ContactorViewSet(viewsets.ModelViewSet):
 
     def delete(self, request, id):
         """
+        删除联系人
+
         根据 id 删除联系人
         """
 
@@ -47,6 +52,8 @@ class ContactorViewSet(viewsets.ModelViewSet):
     def put(self, request):
         """
         修改联系人
+
+        更新联系人信息
         """
 
         data = parse_data(request, 'PUT')
@@ -61,7 +68,7 @@ class ContactorViewSet(viewsets.ModelViewSet):
         return Response.success(contractor)
 
     @action(methods=['GET'], detail=False, url_path='page')
-    def page(request):
+    def page(self, request):
         """
         分页查询联系人
 

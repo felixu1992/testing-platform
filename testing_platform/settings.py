@@ -54,10 +54,10 @@ MIDDLEWARE = [
     # 'backend.middleware.ExceptionMiddleware'
 ]
 
-REST_FRAMEWORK = {
-    # 指定支持coreapi的Schema
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
-}
+# REST_FRAMEWORK = {
+#     # 指定支持coreapi的Schema
+#     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+# }
 
 ROOT_URLCONF = 'testing_platform.urls'
 
