@@ -1,5 +1,6 @@
 import os
 import time
+
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.http import FileResponse
@@ -7,10 +8,10 @@ from django.utils.http import urlquote
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 
+from backend import FILE_REPO
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.models import File
-from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params
-from backend import FILE_REPO
+from backend.util import Response, parse_data, get_params, update_fields, page_params
 
 
 class FileSerializer(serializers.ModelSerializer):
@@ -77,7 +78,7 @@ class FileViewSet(viewsets.ModelViewSet):
         """
         data = parse_data(request, 'GET')
         page, page_size, name = page_params(data, 'name').values()
-        files = File.objects.filter(owner=UserHolder.current_user()).contains(name=name)
+        files = File.objects.owner().contains(name=name)
         page_files = Paginator(files, page_size)
         page_files.page(page)
         return Response.success(page_files)
@@ -103,7 +104,7 @@ def get_by_id(id):
     """
 
     try:
-        file = File.objects.get(owner=UserHolder.current_user(), id=id)
+        file = File.objects.owner().get(id=id)
     except ObjectDoesNotExist:
         raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
     return file
@@ -114,7 +115,7 @@ def count_by_group(group_id):
     根据分组 id 计数
     """
 
-    return File.objects.filter(owner=UserHolder.current_user(), group_id=group_id).count()
+    return File.objects.owner().filter(group_id=group_id).count()
 
 
 def _file_data(request, toleration=False):
