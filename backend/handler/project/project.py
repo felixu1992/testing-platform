@@ -14,11 +14,11 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class ContactorGroupViewSet(viewsets.ModelViewSet):
-
     queryset = Project
 
     serializer_class = ProjectSerializer
-    def create(request):
+
+    def post(self, request):
         """
         创建项目
         """
@@ -31,7 +31,6 @@ class ContactorGroupViewSet(viewsets.ModelViewSet):
             raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
         project.save()
         return Response.success(project)
-
 
     def delete(request, id):
         """
@@ -49,8 +48,7 @@ class ContactorGroupViewSet(viewsets.ModelViewSet):
         # TODO 删用例和报告
         return Response.def_success()
 
-
-    def update(request):
+    def put(self, request):
         """
         修改项目信息
         """
@@ -66,8 +64,7 @@ class ContactorGroupViewSet(viewsets.ModelViewSet):
         project.save()
         return Response.success(project)
 
-
-    def page(request):
+    def page(self, request):
         """
         分页查询项目
 
@@ -83,8 +80,7 @@ class ContactorGroupViewSet(viewsets.ModelViewSet):
         page_projects.page(page)
         return Response.success(projects)
 
-
-    def detail(request, id):
+    def detail(self, request, id):
         """
         根据 id 查询项目详细信息
         """
@@ -92,8 +88,7 @@ class ContactorGroupViewSet(viewsets.ModelViewSet):
         parse_data(request, 'GET')
         return Response.success(get_by_id(id))
 
-
-    def copy(request):
+    def copy(self, request):
         """
         该实现用来拷贝项目
 
@@ -105,8 +100,7 @@ class ContactorGroupViewSet(viewsets.ModelViewSet):
         # TODO copy
         print()
 
-
-    def execute(request):
+    def execute(self, request):
         """
         执行项目下所有接口用例
 

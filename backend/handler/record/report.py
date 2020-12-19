@@ -1,9 +1,23 @@
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
-from backend.exception import ErrorCode, ValidateError, PlatformError
-from backend.models import Report
-from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params
+from rest_framework import serializers, viewsets
 
+from backend.exception import ErrorCode, PlatformError
+from backend.models import Report
+from backend.util import UserHolder, Response, parse_data, page_params
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = ['id', 'name', 'created_at', 'updated_at']
+
+
+class ContactorGroupViewSet(viewsets.ModelViewSet):
+
+    queryset = Report
+
+    serializer_class = ReportSerializer
 
 def page(request):
     """
