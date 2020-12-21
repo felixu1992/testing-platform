@@ -14,25 +14,29 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.conf.urls import url
-from django.urls import path, include
+from django.urls import path, include, re_path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
+from backend.handler.case.urls import case_router
+from backend.handler.record.urls import record_router, report_router
+
 schema_view = get_schema_view(
-   openapi.Info(
-      title='贼牛逼的 API 文档',
-      default_version='v1',
-      description='别问，反正就是贼牛逼',
-      terms_of_service='https://www.baidu.com',
-      contact=openapi.Contact(email='326554201@qq.com'),
-      license=openapi.License(name='Apache-2.0 License'),
-   ),
-   public=True,
-   permission_classes=(permissions.AllowAny,),
+    openapi.Info(
+        title='贼牛逼的 API 文档',
+        default_version='v1',
+        description='别问，反正就是贼牛逼',
+        terms_of_service='https://www.baidu.com',
+        contact=openapi.Contact(email='326554201@qq.com'),
+        license=openapi.License(name='Apache-2.0 License'),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
 )
 
 urlpatterns = (
+    re_path(r'^$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     # 登录登出
     path('user/', include('backend.handler.user.urls')),
 
@@ -45,11 +49,15 @@ urlpatterns = (
     # 项目
     path('project/', include('backend.handler.project.urls')),
 
-    # # 用例
-    # path('case/', include('backend.handler.case.urls')),
-    #
-    # # 记录
-    # path('record/', include('backend.handler.record.urls'))
+    # 用例
+    path('case/', include(case_router.urls)),
+
+    # 记录
+    path('record/', include(record_router.urls)),
+
+    # 报告
+    path('report/', include(report_router.urls)),
+
     url(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     url(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc')

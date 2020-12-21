@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
+from rest_framework.decorators import action
 
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.models import Project
@@ -64,6 +65,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         project.save()
         return Response.success(project)
 
+    @action(methods=['GET'], detail=False, url_path='page')
     def page(self, request):
         """
         分页查询项目
@@ -80,7 +82,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         page_projects.page(page)
         return Response.success(projects)
 
-    def detail(self, request, id):
+    def get(self, request, id):
         """
         根据 id 查询项目详细信息
         """
@@ -88,6 +90,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         parse_data(request, 'GET')
         return Response.success(get_by_id(id))
 
+    @action(methods=['POST'], detail=False, url_path='copy')
     def copy(self, request):
         """
         该实现用来拷贝项目
@@ -100,6 +103,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         # TODO copy
         print()
 
+    @action(methods=['POST'], detail=False, url_path='execute')
     def execute(self, request):
         """
         执行项目下所有接口用例

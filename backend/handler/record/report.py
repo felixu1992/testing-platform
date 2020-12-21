@@ -1,6 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
+from rest_framework.decorators import action
 
 from backend.exception import ErrorCode, PlatformError
 from backend.models import Report
@@ -19,7 +20,8 @@ class ReportViewSet(viewsets.ModelViewSet):
 
     serializer_class = ReportSerializer
 
-    def page(request):
+    @action(methods=['GET'], detail=False, url_path='page')
+    def page(self, request):
         """
         分页查询项目
 
@@ -35,8 +37,7 @@ class ReportViewSet(viewsets.ModelViewSet):
         page_projects.page(page)
         return Response.success(projects)
 
-
-    def detail(request, id):
+    def get(self, request, id):
         """
         根据 id 查询项目详细信息
         """

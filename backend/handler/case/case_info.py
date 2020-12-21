@@ -1,120 +1,132 @@
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
+from rest_framework import serializers, viewsets
+from rest_framework.decorators import action
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.models import CaseInfo
 from backend.util import UserHolder, Response, parse_data, page_params, get_params, update_fields
 
 
-def create(request):
-    """
-    新增用例
-    """
-
-    body = parse_data(request, 'POST')
-    case_info = CaseInfo(**body)
-    try:
-        case_info.full_clean()
-    except ValidationError as e:
-        raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-    case_info.save()
-    return Response.success(case_info)
+class CaseInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CaseInfo
+        fields = ['id', 'created_at', 'updated_at']
 
 
-def delete(request, id):
-    """
-    根据 id 删除项目
+class CaseInfoViewSet(viewsets.ModelViewSet):
+    queryset = CaseInfo
 
-    前端需要二次确认
-    """
+    serializer_class = CaseInfoSerializer
 
-    parse_data(request, 'DELETE')
-    project = get_by_id(id)
-    project.delete()
-    return Response.def_success()
+    def post(self, request):
+        """
+        新增用例
+        """
 
+        body = parse_data(request, 'POST')
+        case_info = CaseInfo(**body)
+        try:
+            case_info.full_clean()
+        except ValidationError as e:
+            raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
+        case_info.save()
+        return Response.success(case_info)
 
-def update(request):
-    """
-    修改项目信息
-    """
+    def delete(self, request, id):
+        """
+        根据 id 删除项目
 
-    data = parse_data(request, 'PUT')
-    param_dict = get_params(data, 'id', 'name', 'remark', 'host', 'path', 'params', 'extend_keys', 'extend_values',
-                            'headers', 'expected_http_status', 'check_status', 'run', 'developer', 'notify', 'sort')
-    project = get_by_id(param_dict['id'])
-    update_fields(project, **param_dict)
-    try:
-        project.full_clean()
-    except ValidationError as e:
-        raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-    project.save()
-    return Response.success(project)
+        前端需要二次确认
+        """
 
+        parse_data(request, 'DELETE')
+        project = get_by_id(id)
+        project.delete()
+        return Response.def_success()
 
-def page(request):
-    """
-    分页查询项目
+    def put(self, request):
+        """
+        修改项目信息
+        """
 
-    可全量分页(当然只有自己的数据)
-    必须传入项目 id
-    可传入 name 模糊
-    可传入 path 模糊
-    可传入 method 精确匹配
-    可传入 run 精确匹配
-    可传入 developer 精确匹配
-    """
+        data = parse_data(request, 'PUT')
+        param_dict = get_params(data, 'id', 'name', 'remark', 'host', 'path', 'params', 'extend_keys', 'extend_values',
+                                'headers', 'expected_http_status', 'check_status', 'run', 'developer', 'notify', 'sort')
+        project = get_by_id(param_dict['id'])
+        update_fields(project, **param_dict)
+        try:
+            project.full_clean()
+        except ValidationError as e:
+            raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
+        project.save()
+        return Response.success(project)
 
-    data = parse_data(request, 'GET')
-    page, page_size, project_id, name, path, method, run, developer = page_params(data, 'project_id', 'name', 'path',
-                                                                                  'method', 'run', 'developer').values()
-    if project_id is None:
-        raise PlatformError.error_args(ErrorCode.MISSING_NECESSARY_KEY, 'project_id')
-    case_infos = CaseInfo.objects.filter(owner=UserHolder.current_user(), project_id=project_id)\
-        .contains(name=name, path=path).iexact(method=method).exact(run=run, developer=developer)
-    page_case_infos = Paginator(case_infos, page_size)
-    page_case_infos.page(page)
-    return Response.success(case_infos)
+    @action(methods=['GET'], detail=False, url_path='page')
+    def page(self, request):
+        """
+        分页查询项目
 
+        可全量分页(当然只有自己的数据)
+        必须传入项目 id
+        可传入 name 模糊
+        可传入 path 模糊
+        可传入 method 精确匹配
+        可传入 run 精确匹配
+        可传入 developer 精确匹配
+        """
 
-def detail(request, id):
-    """
-    根据 id 查询用例详细信息
-    """
+        data = parse_data(request, 'GET')
+        page, page_size, project_id, name, path, method, run, developer = page_params(data, 'project_id', 'name',
+                                                                                      'path',
+                                                                                      'method', 'run',
+                                                                                      'developer').values()
+        if project_id is None:
+            raise PlatformError.error_args(ErrorCode.MISSING_NECESSARY_KEY, 'project_id')
+        case_infos = CaseInfo.objects.filter(owner=UserHolder.current_user(), project_id=project_id) \
+            .contains(name=name, path=path).iexact(method=method).exact(run=run, developer=developer)
+        page_case_infos = Paginator(case_infos, page_size)
+        page_case_infos.page(page)
+        return Response.success(case_infos)
 
-    parse_data(request, 'GET')
-    return Response.success(get_by_id(id))
+    def get(self, request, id):
+        """
+        根据 id 查询用例详细信息
+        """
 
+        parse_data(request, 'GET')
+        return Response.success(get_by_id(id))
 
-def copy(request):
-    """
-    该实现用来拷贝项目
+    @action(methods=['POST'], detail=False, url_path='copy')
+    def copy(self, request):
+        """
+        该实现用来拷贝项目
 
-    会拷贝以下内容：
-    1. 项目信息
-    2. 项目下接口信息
-    """
+        会拷贝以下内容：
+        1. 项目信息
+        2. 项目下接口信息
+        """
 
-    # TODO copy
-    print()
+        # TODO copy
+        print()
 
+    @action(methods=['GET'], detail=False, url_path='export')
+    def export(request):
+        """
+        可以先不实现
+        """
 
-def export(request):
-    """
-    可以先不实现
-    """
+        print()
 
-    print()
+    @action(methods=['POST'], detail=False, url_path='execute')
+    def execute(request):
+        """
+        执行项目下所有接口用例
 
+        1. 执行接口用例
+        2. 生成用例报告
+        """
 
-def execute(request):
-    """
-    执行项目下所有接口用例
-
-    1. 执行接口用例
-    2. 生成用例报告
-    """
-
-    print()
+        print()
 
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
