@@ -13,7 +13,7 @@ class RecordSerializer(serializers.ModelSerializer):
         fields = ['id', 'group_id', 'project_id','remark', 'passed', 'failed', 'ignored', 'total', 'created_at', 'updated_at']
 
 
-class ContactorGroupViewSet(viewsets.ModelViewSet):
+class RecordViewSet(viewsets.ModelViewSet):
     queryset = Record
 
     serializer_class = RecordSerializer

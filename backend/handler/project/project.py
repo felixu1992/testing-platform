@@ -13,7 +13,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'created_at', 'updated_at']
 
 
-class ContactorGroupViewSet(viewsets.ModelViewSet):
+class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project
 
     serializer_class = ProjectSerializer

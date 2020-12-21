@@ -15,7 +15,7 @@ class ProjectGroupSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'created_at', 'updated_at']
 
 
-class ContactorGroupViewSet(viewsets.ModelViewSet):
+class ProjectGroupViewSet(viewsets.ModelViewSet):
 
     queryset = ProjectGroup
 

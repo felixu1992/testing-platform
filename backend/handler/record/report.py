@@ -13,36 +13,36 @@ class ReportSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'created_at', 'updated_at']
 
 
-class ContactorGroupViewSet(viewsets.ModelViewSet):
+class ReportViewSet(viewsets.ModelViewSet):
 
     queryset = Report
 
     serializer_class = ReportSerializer
 
-def page(request):
-    """
-    分页查询项目
+    def page(request):
+        """
+        分页查询项目
 
-    可全量分页(当然只有自己的数据)
-    可传入分组
-    可传入 name 模糊
-    """
+        可全量分页(当然只有自己的数据)
+        可传入分组
+        可传入 name 模糊
+        """
 
-    data = parse_data(request, 'GET')
-    page, page_size, name, group_id = page_params(data, 'name', 'group_id').values()
-    projects = Report.objects.filter(owner=UserHolder.current_user()).exact(group_id=group_id).contains(name=name)
-    page_projects = Paginator(projects, page_size)
-    page_projects.page(page)
-    return Response.success(projects)
+        data = parse_data(request, 'GET')
+        page, page_size, name, group_id = page_params(data, 'name', 'group_id').values()
+        projects = Report.objects.filter(owner=UserHolder.current_user()).exact(group_id=group_id).contains(name=name)
+        page_projects = Paginator(projects, page_size)
+        page_projects.page(page)
+        return Response.success(projects)
 
 
-def detail(request, id):
-    """
-    根据 id 查询项目详细信息
-    """
+    def detail(request, id):
+        """
+        根据 id 查询项目详细信息
+        """
 
-    parse_data(request, 'GET')
-    return Response.success(get_by_id(id))
+        parse_data(request, 'GET')
+        return Response.success(get_by_id(id))
 
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
