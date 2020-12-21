@@ -26,6 +26,9 @@ class ErrorCode(Enum):
     # 项目
     PROJECT_GROUP_HAS_PROJECT = 30000, '文件分组下存在文件，无法删除'
 
+    # 用例
+    CASE_CREATE_REPORT_FAILED = 40000, '用例执行生成结果失败，请稍后再试'
+
     def __init__(self, code, message):
         self.code = code
         self.message = message

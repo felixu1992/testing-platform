@@ -4,9 +4,13 @@ import time
 import requests
 from requests import Response
 from backend.models import Report
-from backend.util import filter_obj_single
+from backend.util import filter_obj_single, PlatformError, ErrorCode
 from backend.handler import file
 from backend import CONTENT_TYPE, APPLICATION_JSON, FORM_DATA, LOGGER
+
+ignored = 'IGNORED'
+passed = 'PASSED'
+failed = 'FAILED'
 
 
 def get_value(source, steps):
@@ -69,42 +73,46 @@ class Executor:
         """
 
         # 循环执行用例
-        # TODO 验证引用传值，是否可以直接返回 self.reports
-        reports = []
         if self.case_infos and len(self.case_infos) > 0:
             for case_info in self.case_infos:
-                reports.append(self.__do_execute(case_info))
-        return reports
+                self.__do_execute(case_info)
+        return self.reports
 
     def __do_execute(self, case_info):
         """
         执行请求
+
+        1. 判断是否执行
+        2. 执行需要构建请求参数
+        3. 填充报告
         """
+
+        # 过滤出结果
+        report = filter_obj_single(self.reports, 'id', case_info.id)
+        # 如果为空则添加一个结果
+        if report is None:
+            raise PlatformError.error(ErrorCode.CASE_CREATE_REPORT_FAILED)
+        # 不执行的用例直接返回
+        if not case_info.run:
+            report.status = ignored
+            return
 
         # 构建请求参数
         request = self.__build_request(case_info)
         if request:
             url, headers, params, files, result = request
         else:
-            return None
+            return
         # 请求开始时间
         start = time.time()
         # 请求
         result = self.__do_request(url, headers, params, files, result, case_info)
         # 计算请求耗时
         time_used = int((time.time() - start) * 1000)
-        # 过滤出结果
-        report = filter_obj_single(self.reports, 'id', case_info.id)
-        # 如果为空则添加一个结果
-        if report is None:
-            # TODO 验证对象是否传递了引用，按理说是
-            report = Report(case_info.__dict__.copy())
-            self.reports.append(report)
         # 校验结果
         self.__check_status(report, result, time_used)
         # print 结果
         self.__print_result(report, url)
-        return report
 
     def __build_request(self, case_info):
         """
@@ -115,10 +123,30 @@ class Executor:
         3. url
         """
 
+        # 构建请求头
+        headers = self.__build_header(case_info)
+
+        # 构建参数
+        params, files = self.__build_params(case_info, headers)
+
+        # 预先构建结果
+        result = {'code': -100, 'message': '预填充错误结果'}
+
+        # 构建 url
+        url = self.__build_url(case_info, result)
+        return url, headers, params, files, result
+
+    def __build_header(self, case_info):
         # 构建请求头，如果所属项目有头信息
         headers = {}
+        # 父级 header
         if self.project and self.project.headers:
             headers.update(self.project.headers)
+        if case_info.headers:
+            headers.update(case_info.headers)
+        return headers
+
+    def __build_params(self, case_info, headers):
         # 得到请求参数
         self.__parse_param(case_info)
         params = case_info.params
@@ -152,9 +180,9 @@ class Executor:
             if not has_file:
                 for p, v in params.items():
                     params[p] = (None, v)
-        # 预先构建结果
-        result = {'code': -100}
-        # 构建 url
+        return params, files
+
+    def __build_url(self, case_info, result):
         if (self.project is None or self.project.host is None) and case_info.host is None:
             result.update({'message': 'host 不能为空'})
             case_info.response_content = '请求路径缺失，接口未执行'
@@ -163,7 +191,7 @@ class Executor:
             case_info.host = self.project.host
         self.__parse_path(case_info)
         url = case_info.host + case_info.path
-        return url, headers, params, files, result
+        return url
 
     def __do_request(self, url, headers, params, files, result, case_info):
         """

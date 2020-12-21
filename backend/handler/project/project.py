@@ -93,7 +93,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(methods=['POST'], detail=False, url_path='copy')
     def copy(self, request):
         """
-        该实现用来拷贝项目
+        拷贝项目
 
         会拷贝以下内容：
         1. 项目信息
