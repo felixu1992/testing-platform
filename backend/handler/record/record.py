@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 
 from backend.exception import ErrorCode, PlatformError, ValidateError
 from backend.models import Record
-from backend.util import UserHolder, Response, parse_data, page_params
+from backend.util import UserHolder, Response, parse_data, page_params, save
 
 
 class RecordSerializer(serializers.ModelSerializer):
@@ -79,9 +79,5 @@ def create(**kwargs):
     """
 
     record = Record(**kwargs)
-    try:
-        record.full_clean()
-    except ValidationError as e:
-        raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-    record.save()
+    save(record)
     return record

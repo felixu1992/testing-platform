@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.models import Contactor
-from backend.util import Response, parse_data, get_params, update_fields, page_params
+from backend.util import Response, parse_data, get_params, update_fields, page_params, save
 
 
 class ContactorSerializer(serializers.ModelSerializer):
@@ -29,11 +29,7 @@ class ContactorViewSet(viewsets.ModelViewSet):
 
         body = parse_data(request, 'POST')
         contactor = Contactor(**body)
-        try:
-            contactor.full_clean()
-        except ValidationError as e:
-            raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-        contactor.save()
+        save(contactor)
         return Response.success(contactor)
 
     def delete(self, request, id):
@@ -60,11 +56,7 @@ class ContactorViewSet(viewsets.ModelViewSet):
         params_dict = get_params(data, 'id', 'name', 'phone', 'email')
         contractor = get_by_id(params_dict['id'])
         update_fields(contractor, **params_dict)
-        try:
-            contractor.full_clean()
-        except ValidationError as e:
-            raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-        contractor.save()
+        save(contractor)
         return Response.success(contractor)
 
     @action(methods=['GET'], detail=False, url_path='page')

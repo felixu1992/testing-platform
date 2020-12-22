@@ -11,7 +11,7 @@ from rest_framework.decorators import action
 from backend import FILE_REPO
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.models import File
-from backend.util import Response, parse_data, get_params, update_fields, page_params
+from backend.util import Response, parse_data, get_params, update_fields, page_params, save
 
 
 class FileSerializer(serializers.ModelSerializer):
@@ -30,21 +30,19 @@ class FileViewSet(viewsets.ModelViewSet):
         """
         创建文件
         """
+
         body = parse_data(request, 'POST')
         file = File(**body)
         # 处理文件
         file.path = _file_data(request)
-        try:
-            file.full_clean()
-        except ValidationError as e:
-            raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-        file.save()
+        save(file)
         return Response.success(file)
 
     def delete(self, request, id):
         """
         根据 id 删除文件
         """
+
         parse_data(request, 'DELETE')
         file = get_by_id(id)
         # TODO 判断是否被用例使用
@@ -55,17 +53,14 @@ class FileViewSet(viewsets.ModelViewSet):
         """
         修改联系人
         """
+
         data = parse_data(request, 'PUT')
         id, name, remark = get_params(data, 'id', 'name', 'remark', toleration=True).values()
         file = get_by_id(id)
         # 处理文件
         path = _file_data(request)
         update_fields(file, name=name, remark=remark, path=path)
-        try:
-            file.full_clean()
-        except ValidationError as e:
-            raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-        file.save()
+        save(file)
         return Response.success(file)
 
     @action(methods=['GET'], detail=False, url_path='page')
@@ -76,6 +71,7 @@ class FileViewSet(viewsets.ModelViewSet):
         可传入分组
         可传入 name 模糊
         """
+
         data = parse_data(request, 'GET')
         page, page_size, name = page_params(data, 'name').values()
         files = File.objects.owner().contains(name=name)
@@ -85,6 +81,10 @@ class FileViewSet(viewsets.ModelViewSet):
 
     @action(methods=['GET'], detail=False, url_path='download/<id>')
     def download(self, request, id):
+        """
+        下载文件
+        """
+
         parse_data(request, 'GET')
         file = get_by_id(id)
         path = file.path

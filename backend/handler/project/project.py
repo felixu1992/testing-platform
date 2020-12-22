@@ -1,3 +1,5 @@
+import random
+
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
@@ -5,8 +7,8 @@ from rest_framework.decorators import action
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.handler.case import case_info
 from backend.handler.record import report, record
-from backend.models import Project
-from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params, Executor
+from backend.models import Project, CaseInfo
+from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params, Executor, save
 from backend.settings import IGNORED, FAILED, PASSED
 
 
@@ -17,6 +19,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
+
     queryset = Project
 
     serializer_class = ProjectSerializer
@@ -28,11 +31,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         body = parse_data(request, 'POST')
         project = Project(**body)
-        try:
-            project.full_clean()
-        except ValidationError as e:
-            raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-        project.save()
+        save(project)
         return Response.success(project)
 
     def delete(request, id):
@@ -60,11 +59,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         params = get_params(data, 'id', 'name', 'remark', 'cookies', 'headers', 'host', toleration=True)
         project = get_by_id(params['id'])
         update_fields(project, **params)
-        try:
-            project.full_clean()
-        except ValidationError as e:
-            raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-        project.save()
+        save(project)
         return Response.success(project)
 
     @action(methods=['GET'], detail=False, url_path='page')
@@ -102,8 +97,19 @@ class ProjectViewSet(viewsets.ModelViewSet):
         2. 项目下接口信息
         """
 
-        # TODO copy
-        print()
+        data = parse_data(request, 'POST')
+        old_project = get_by_id(get_params(data, 'id'))
+        new_project = Project(old_project.__dict__.copy())
+        new_project.id = None
+        new_project.name = new_project.name + '_copy_' + str(random.randint(0, 99999))
+        save(new_project)
+        case_infos = case_info.list_by_project(old_project)
+        for info in case_infos:
+            new_case_info = CaseInfo(info.__dict__.copy())
+            new_case_info.id = None
+            new_case_info.name = new_case_info.name + '_copy_' + str(random.randint(0, 99999))
+            save(new_case_info)
+        return Response.success(new_project)
 
     @action(methods=['POST'], detail=False, url_path='execute')
     def execute(self, request):

@@ -1,11 +1,13 @@
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+import random
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
-from backend.exception import ErrorCode, ValidateError, PlatformError
+from backend.exception import ErrorCode, PlatformError
 from backend.handler import project
 from backend.models import CaseInfo
-from backend.util import UserHolder, Response, parse_data, page_params, get_params, update_fields, Executor
+from backend.util import UserHolder, Response, parse_data, page_params, get_params, update_fields, Executor, save
 
 
 class CaseInfoSerializer(serializers.ModelSerializer):
@@ -26,41 +28,33 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
 
         body = parse_data(request, 'POST')
         case_info = CaseInfo(**body)
-        try:
-            case_info.full_clean()
-        except ValidationError as e:
-            raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-        case_info.save()
+        save(case_info)
         return Response.success(case_info)
 
     def delete(self, request, id):
         """
-        根据 id 删除项目
+        根据 id 删除用例
 
         前端需要二次确认
         """
 
         parse_data(request, 'DELETE')
-        project = get_by_id(id)
-        project.delete()
+        case_info = get_by_id(id)
+        case_info.delete()
         return Response.def_success()
 
     def put(self, request):
         """
-        修改项目信息
+        修改用例信息
         """
 
         data = parse_data(request, 'PUT')
         param_dict = get_params(data, 'id', 'name', 'remark', 'host', 'path', 'params', 'extend_keys', 'extend_values',
                                 'headers', 'expected_http_status', 'check_status', 'run', 'developer', 'notify', 'sort')
-        project = get_by_id(param_dict['id'])
-        update_fields(project, **param_dict)
-        try:
-            project.full_clean()
-        except ValidationError as e:
-            raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-        project.save()
-        return Response.success(project)
+        case_info = get_by_id(param_dict['id'])
+        update_fields(case_info, **param_dict)
+        save(case_info)
+        return Response.success(case_info)
 
     @action(methods=['GET'], detail=False, url_path='page')
     def page(self, request):
@@ -100,15 +94,20 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
     @action(methods=['POST'], detail=False, url_path='copy')
     def copy(self, request):
         """
-        该实现用来拷贝项目
+        拷贝接口
 
-        会拷贝以下内容：
-        1. 项目信息
-        2. 项目下接口信息
+        拷贝接口信息
+        对于唯一属性，拷贝后添加随机数
         """
 
-        # TODO copy
-        print()
+        data = parse_data(request, 'POST')
+        old_case_info = get_by_id(get_params(data, 'id'))
+        new_case_info = CaseInfo(old_case_info.__dict__.copy())
+        new_case_info.id = None
+        new_case_info.name = new_case_info.name + '_copy_' + str(random.randint(0, 99999))
+        save(new_case_info)
+        return Response.success(new_case_info)
+
 
     @action(methods=['GET'], detail=False, url_path='export')
     def export(self, request):

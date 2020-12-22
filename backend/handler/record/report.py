@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 
 from backend.exception import ErrorCode, PlatformError, ValidateError
 from backend.models import Report
-from backend.util import UserHolder, Response, parse_data, page_params
+from backend.util import UserHolder, Response, parse_data, page_params, save
 
 
 class ReportSerializer(serializers.ModelSerializer):
@@ -64,9 +64,5 @@ def create(report):
     创建用例结果
     """
 
-    try:
-        report.full_clean()
-    except ValidationError as e:
-        raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-    report.save()
+    save(report)
     return report

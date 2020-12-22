@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.handler import project
 from backend.models import ProjectGroup
-from backend.util import Response, parse_data, get_params, update_fields, page_params
+from backend.util import Response, parse_data, get_params, update_fields, page_params, save
 
 
 class ProjectGroupSerializer(serializers.ModelSerializer):
@@ -28,11 +28,7 @@ class ProjectGroupViewSet(viewsets.ModelViewSet):
 
         body = parse_data(request, 'POST')
         group = ProjectGroup(**body)
-        try:
-            group.full_clean()
-        except ValidationError as e:
-            raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-        group.save()
+        save(group)
         return Response.success(group)
 
     def delete(self, request, id):
@@ -58,11 +54,7 @@ class ProjectGroupViewSet(viewsets.ModelViewSet):
         id, name = get_params(body, 'id', 'name').values()
         group = get_by_id(id)
         update_fields(group, name=name)
-        try:
-            group.full_clean()
-        except ValidationError as e:
-            raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
-        group.save()
+        save(group)
         return Response.success(group)
 
     @action(methods=['GET'], detail=False, url_path='page')

@@ -1,8 +1,10 @@
 import json
+
+from django.core.exceptions import ValidationError
 from django.http import QueryDict
 from backend.util.jwt_token import UserHolder
 from backend import LOGGER
-from backend.exception import ErrorCode, PlatformError
+from backend.exception import ErrorCode, PlatformError, ValidateError
 
 
 def parse_data(request, method):
@@ -115,3 +117,16 @@ def filter_obj_single(objs, key, value):
     """
     obj = [obj for obj in objs if getattr(obj, key) == value]
     return obj[0]
+
+
+def save(entity):
+    """
+    保存对象信息
+
+    Django 往数据库存储信息
+    """
+    try:
+        entity.full_clean()
+    except ValidationError as e:
+        raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
+    entity.save()

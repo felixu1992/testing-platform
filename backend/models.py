@@ -291,7 +291,7 @@ class CaseInfo(BaseEntity):
     """
 
     id = models.AutoField(primary_key=True)
-    name = models.CharField(verbose_name='用例名称', max_length=32, unique=True,
+    name = models.CharField(verbose_name='用例名称', max_length=32,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
                                         MaxLengthValidator(32, message='最大长度为 32')])
     remark = models.CharField(verbose_name='项目备注', max_length=255, blank=True, null=True,
@@ -329,7 +329,8 @@ class CaseInfo(BaseEntity):
         ordering = ['sort', '-created_at']
         # 唯一索引
         constraints = [
-            models.UniqueConstraint(fields=['owner', 'project_id', 'sort'], name='case_owner_project_sort_idx')
+            models.UniqueConstraint(fields=['owner', 'project_id', 'sort'], name='case_owner_project_sort_idx'),
+            models.UniqueConstraint(fields=['owner', 'project_id', 'name'], name='case_owner_project_name_idx')
         ]
         # 普通索引
         indexes = [
