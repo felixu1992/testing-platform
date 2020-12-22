@@ -118,3 +118,8 @@
 - 用例支持延时执行     
 - 用例依赖，直接用数组     
 - 权限拦截加回来
+
+## 运行
+- `pip freeze > install.txt` 导出所有依赖     
+- `pip install -r install.txt` 安装所有依赖
+- `python manage.py runserver 0.0.0.0:port`
