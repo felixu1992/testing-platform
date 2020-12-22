@@ -1,9 +1,9 @@
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 
-from backend.exception import ErrorCode, PlatformError
+from backend.exception import ErrorCode, PlatformError, ValidateError
 from backend.models import Report
 from backend.util import UserHolder, Response, parse_data, page_params
 
@@ -15,7 +15,6 @@ class ReportSerializer(serializers.ModelSerializer):
 
 
 class ReportViewSet(viewsets.ModelViewSet):
-
     queryset = Report
 
     serializer_class = ReportSerializer
@@ -57,4 +56,17 @@ def get_by_id(id):
         report = Report.objects.get(owner=UserHolder.current_user(), id=id)
     except ObjectDoesNotExist:
         raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
+    return report
+
+
+def create(report):
+    """
+    创建用例结果
+    """
+
+    try:
+        report.full_clean()
+    except ValidationError as e:
+        raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
+    report.save()
     return report

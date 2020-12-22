@@ -1,9 +1,9 @@
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 
-from backend.exception import ErrorCode, PlatformError
+from backend.exception import ErrorCode, PlatformError, ValidateError
 from backend.models import Record
 from backend.util import UserHolder, Response, parse_data, page_params
 
@@ -11,7 +11,8 @@ from backend.util import UserHolder, Response, parse_data, page_params
 class RecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = Record
-        fields = ['id', 'group_id', 'project_id','remark', 'passed', 'failed', 'ignored', 'total', 'created_at', 'updated_at']
+        fields = ['id', 'group_id', 'project_id', 'remark', 'passed', 'failed', 'ignored', 'total', 'created_at',
+                  'updated_at']
 
 
 class RecordViewSet(viewsets.ModelViewSet):
@@ -69,4 +70,18 @@ def get_by_id(id):
         record = Record.objects.get(owner=UserHolder.current_user(), id=id)
     except ObjectDoesNotExist:
         raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
+    return record
+
+
+def create(**kwargs):
+    """
+    创建测试记录
+    """
+
+    record = Record(**kwargs)
+    try:
+        record.full_clean()
+    except ValidationError as e:
+        raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
+    record.save()
     return record

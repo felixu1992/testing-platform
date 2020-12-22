@@ -2,10 +2,12 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
-
 from backend.exception import ErrorCode, ValidateError, PlatformError
+from backend.handler.case import case_info
+from backend.handler.record import report, record
 from backend.models import Project
-from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params
+from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params, Executor
+from backend.settings import IGNORED, FAILED, PASSED
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -112,7 +114,21 @@ class ProjectViewSet(viewsets.ModelViewSet):
         2. 生成用例报告
         """
 
-        print()
+        data = parse_data(request, 'POST')
+        project = get_by_id(get_params(data, 'id'))
+        case_infos = case_info.list_by_project(project.id)
+        executor = Executor(case_infos=case_infos, project=project)
+        reports = executor.execute()
+        # 构建记录
+        ignored_num = [obj for obj in reports if getattr(obj, 'status') == IGNORED]
+        passed_num = [obj for obj in reports if getattr(obj, 'status') == PASSED]
+        failed_num = [obj for obj in reports if getattr(obj, 'status') == FAILED]
+        reco = record.create(group_id=project.group_id, project_id=project.id, remark='', owner=project.owner,
+                             total=len(case_infos), ignored=ignored_num, passed=passed_num, failed=failed_num)
+        for result in reports:
+            result.record_id = reco.id
+            report.create(result)
+        return Response.success(reco)
 
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------

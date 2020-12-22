@@ -3,8 +3,9 @@ from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 from backend.exception import ErrorCode, ValidateError, PlatformError
+from backend.handler import project
 from backend.models import CaseInfo
-from backend.util import UserHolder, Response, parse_data, page_params, get_params, update_fields
+from backend.util import UserHolder, Response, parse_data, page_params, get_params, update_fields, Executor
 
 
 class CaseInfoSerializer(serializers.ModelSerializer):
@@ -110,7 +111,7 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         print()
 
     @action(methods=['GET'], detail=False, url_path='export')
-    def export(request):
+    def export(self, request):
         """
         可以先不实现
         """
@@ -118,7 +119,7 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         print()
 
     @action(methods=['POST'], detail=False, url_path='execute')
-    def execute(request):
+    def execute(self, request):
         """
         执行项目下所有接口用例
 
@@ -126,7 +127,12 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         2. 生成用例报告
         """
 
-        print()
+        data = parse_data(request, 'POST')
+        case_info = get_by_id(get_params(data, 'id'))
+        pro = project.get_by_id(case_info.project_id)
+        executor = Executor(case_infos=[case_info], project=pro)
+        reports = executor.execute()
+        return Response.success(reports[0])
 
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
