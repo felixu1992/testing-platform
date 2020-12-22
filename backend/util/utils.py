@@ -125,8 +125,25 @@ def save(entity):
 
     Django 往数据库存储信息
     """
+
     try:
         entity.full_clean()
     except ValidationError as e:
         raise ValidateError.error(ErrorCode.VALIDATION_ERROR, *e.messages)
     entity.save()
+
+
+def batch_save(objects, objs):
+    """
+    批量新增
+    """
+
+    objects.bulk_create(objs)
+
+
+def batch_update(objects, objs):
+    """
+    批量新增
+    """
+
+    objects.bulk_update(objs)

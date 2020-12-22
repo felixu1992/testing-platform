@@ -8,7 +8,7 @@ from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.handler.case import case_info
 from backend.handler.record import report, record
 from backend.models import Project, CaseInfo
-from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params, Executor, save
+from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params, Executor, save, batch_save
 from backend.settings import IGNORED, FAILED, PASSED
 
 
@@ -104,11 +104,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
         new_project.name = new_project.name + '_copy_' + str(random.randint(0, 99999))
         save(new_project)
         case_infos = case_info.list_by_project(old_project)
+        new_infos = []
         for info in case_infos:
             new_case_info = CaseInfo(info.__dict__.copy())
             new_case_info.id = None
             new_case_info.name = new_case_info.name + '_copy_' + str(random.randint(0, 99999))
-            save(new_case_info)
+            new_infos.append(new_case_info)
+        batch_save(CaseInfo.objects, new_infos)
         return Response.success(new_project)
 
     @action(methods=['POST'], detail=False, url_path='execute')

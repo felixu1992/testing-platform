@@ -1,9 +1,8 @@
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
-
-from backend.exception import ErrorCode, ValidateError, PlatformError
+from backend.exception import ErrorCode, PlatformError
 from backend.handler import contactor
 from backend.models import ContactorGroup
 from backend.util import Response, get_params, parse_data, page_params, update_fields, save
@@ -17,7 +16,7 @@ class ContactorGroupSerializer(serializers.ModelSerializer):
 
 class ContactorGroupViewSet(viewsets.ModelViewSet):
 
-    queryset = ContactorGroup
+    queryset = ContactorGroup.objects
 
     serializer_class = ContactorGroupSerializer
 

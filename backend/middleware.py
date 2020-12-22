@@ -1,3 +1,5 @@
+import re
+
 from backend.util.jwt_token import UserHolder
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.util.resp_data import Response
@@ -5,10 +7,11 @@ from backend import LOGGER
 from django.core.cache import cache
 
 try:
-
     from django.utils.deprecation import MiddlewareMixin
 except ImportError:
     MiddlewareMixin = object
+
+ignores = [re.compile('^/$'), re.compile('/user/signin'), re.compile('js$'), re.compile('css$'), re.compile('swagger')]
 
 
 class RequestMiddleware(MiddlewareMixin):
@@ -16,11 +19,18 @@ class RequestMiddleware(MiddlewareMixin):
         """
         校验 token
 
-        1. 忽略登陆和主页
+        1. 忽略部分路径规则
         2. 解析出 token 缓存当前用户
         """
-        # 非登录和主页才拦截
-        if request.path != '/user/signin':
+
+        allowed = False
+        for ignore in ignores:
+            if re.match(ignore, request.path):
+                allowed = True
+                break
+
+        # 不被忽略则按规则校验
+        if not allowed:
             # 取出请求头，失败跳回首页
             headers = request.headers
             try:

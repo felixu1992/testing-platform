@@ -7,10 +7,7 @@ from backend.models import Report
 from backend.util import filter_obj_single, PlatformError, ErrorCode
 from backend.handler import file
 from backend import CONTENT_TYPE, APPLICATION_JSON, FORM_DATA, LOGGER
-
-ignored = 'IGNORED'
-passed = 'PASSED'
-failed = 'FAILED'
+from backend.settings import *
 
 
 def get_value(source, steps):
@@ -94,7 +91,7 @@ class Executor:
             raise PlatformError.error(ErrorCode.CASE_CREATE_REPORT_FAILED)
         # 不执行的用例直接返回
         if not case_info.run:
-            report.status = ignored
+            report.status = IGNORED
             return
 
         # 构建请求参数
@@ -200,8 +197,6 @@ class Executor:
 
         # 请求接口
         method = case_info.method
-        if not case_info.run:
-            return {'ignore': True}
         try:
             # POST
             if method == 'post':
@@ -230,7 +225,6 @@ class Executor:
             #     result = {'code': '-1', 'message': '请求失败，请检查用例的请求路径、请求方法、请求参数是否正确'}
         except Exception:
             result.update({'message': '请求失败，请检查用例的请求路径、请求方法、请求参数是否正确'})
-        result.update({'ignore': False})
         return result
 
     def __check_status(self, report, result, time_used):
@@ -244,13 +238,10 @@ class Executor:
         对比字典内容是否一致，从而确定结果是否符合预期
         """
 
-        # 不运行的直接返回
-        if not report.run:
-            return
         report.time_used = time_used
 
         # 校验 Http Code
-        report.status = 'failed'
+        report.status = FAILED
         report.http_status = result['http_code']
         if report.check_status and report.http_status != report.expected_http_status:
             return
@@ -290,11 +281,11 @@ class Executor:
             response.update({expected_keys[i]: str(get_value(result, check_steps[i]))})
         # 填入结果
         if expected == response:
-            report.status = 'passed'
+            report.status = PASSED
         else:
-            report.status = 'failed'
-        result.pop('ignore')
-        result.pop('http_code')
+            report.status = FAILED
+        # result.pop('ignore')
+        # result.pop('http_code')
         # 填充结果到用例对象中
         report.response_content = json.dumps(result, ensure_ascii=False)
 

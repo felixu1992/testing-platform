@@ -67,7 +67,7 @@ class UserViewSet(viewsets.GenericViewSet):
             cache.expire(0)
         return HttpResponseRedirect('/')
 
-    def register(request):
-        print()
+    def register(self, request):
+        pass
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
