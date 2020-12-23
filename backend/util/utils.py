@@ -98,7 +98,7 @@ def update_fields(obj, always=False, **kwargs):
     通过 always 空值是否可更新空值
     """
 
-    if obj is None or isinstance(obj, object):
+    if obj is None or not isinstance(obj, object):
         return
     for field, value in kwargs.items():
         # 总是更新，更新所有值

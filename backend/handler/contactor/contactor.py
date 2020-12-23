@@ -1,9 +1,9 @@
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 
-from backend.exception import ErrorCode, ValidateError, PlatformError
+from backend.exception import ErrorCode, PlatformError
 from backend.models import Contactor
 from backend.util import Response, parse_data, get_params, update_fields, page_params, save
 

@@ -1,4 +1,4 @@
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, Page
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Model
 from django.forms import model_to_dict
@@ -16,17 +16,19 @@ class ExtendedEncoder(DjangoJSONEncoder):
         if isinstance(obj, Model):
             return obj_to_dict(obj, exclude=['password', 'owner'])
         # Paginator 对象转字典，针对分页情况
-        if isinstance(obj, Paginator):
+        if isinstance(obj, Page):
             return page_to_dict(obj)
         # 都不是，采用默认父类序列化方式
         return super().default(obj)
 
 
 def page_to_dict(obj):
+    paginator = obj.paginator
     return {
-        'page': obj.num_pages,
-        'page_size': obj.per_page,
-        'total': obj.count,
+        'page': obj.number,
+        'page_size': paginator.per_page,
+        'total_pages': paginator.num_pages,
+        'total_count': paginator.count,
         'records': list(obj.object_list)
     }
 

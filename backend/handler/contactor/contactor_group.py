@@ -1,9 +1,8 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
-from rest_framework.decorators import action
 from backend.exception import ErrorCode, PlatformError
-from backend.handler import contactor
+from backend.handler.contactor.contactor import count_by_group
 from backend.models import ContactorGroup
 from backend.util import Response, get_params, parse_data, page_params, update_fields, save
 
@@ -20,7 +19,7 @@ class ContactorGroupViewSet(viewsets.ModelViewSet):
 
     serializer_class = ContactorGroupSerializer
 
-    def post(self, request):
+    def create(self, request, *args, **kwargs):
         """
         创建联系人分组
         """
@@ -30,21 +29,22 @@ class ContactorGroupViewSet(viewsets.ModelViewSet):
         save(group)
         return Response.success(group)
 
-    def delete(self, request, id):
+    def destroy(self, request, *args, **kwargs):
         """
         根据 id 删除联系人分组
         """
 
         parse_data(request, 'DELETE')
+        id = kwargs['pk']
         group = get_by_id(id)
         # 判断是否被联系人使用
-        count = contactor.count_by_group(id)
+        count = count_by_group(id)
         if count > 0:
             raise PlatformError.error(ErrorCode.CONTACTOR_GROUP_HAS_CONTACTOR)
         group.delete()
         return Response.def_success()
 
-    def put(self, request):
+    def update(self, request, *args, **kwargs):
         """
         修改联系人分组
         """
@@ -56,8 +56,7 @@ class ContactorGroupViewSet(viewsets.ModelViewSet):
         save(group)
         return Response.success(group)
 
-    @action(methods=['GET'], detail=False, url_path='page')
-    def page(self, request):
+    def list(self, request, *args, **kwargs):
         """
         分页查询联系人分组
 
@@ -68,8 +67,8 @@ class ContactorGroupViewSet(viewsets.ModelViewSet):
         page, page_size, name = page_params(data, 'name').values()
         groups = ContactorGroup.objects.owner().contains(name=name)
         page_group = Paginator(groups, page_size)
-        page_group.page(page)
-        return Response.success(page_group)
+        result = page_group.page(page)
+        return Response.success(result)
 
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
