@@ -205,7 +205,7 @@ class File(BaseEntity):
     """
 
     id = models.AutoField(primary_key=True)
-    name = models.CharField(verbose_name='文件名称', max_length=32, unique=True,
+    name = models.CharField(verbose_name='文件名称', max_length=32,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
                                         MaxLengthValidator(32, message='最大长度为 32')])
     path = models.CharField(verbose_name='文件路径', max_length=255,

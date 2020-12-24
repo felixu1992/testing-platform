@@ -1,16 +1,15 @@
 import os
 import time
-
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.http import FileResponse
 from django.utils.http import urlquote
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
-
 from backend import FILE_REPO
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.models import File
+from backend.handler.file import file_group
 from backend.util import Response, parse_data, get_params, update_fields, page_params, save
 
 
@@ -22,34 +21,40 @@ class FileSerializer(serializers.ModelSerializer):
 
 class FileViewSet(viewsets.ModelViewSet):
 
-    queryset = File
+    queryset = File.objects
 
     serializer_class = FileSerializer
 
-    def post(self, request):
+    def create(self, request, *args, **kwargs):
         """
         创建文件
         """
 
         body = parse_data(request, 'POST')
         file = File(**body)
+        # 校验分组是否存在
+        file_group.get_by_id(file.group_id)
         # 处理文件
         file.path = _file_data(request)
         save(file)
         return Response.success(file)
 
-    def delete(self, request, id):
+    def destroy(self, request, *args, **kwargs):
         """
         根据 id 删除文件
         """
 
         parse_data(request, 'DELETE')
+        id = kwargs['pk']
         file = get_by_id(id)
         # TODO 判断是否被用例使用
+        # 删除文件
+        if os.path.exists(file.path):
+            os.remove(file.path)
         file.delete()
         return Response.def_success()
 
-    def put(self, request):
+    def update(self, request, *args, **kwargs):
         """
         修改联系人
         """
@@ -57,14 +62,15 @@ class FileViewSet(viewsets.ModelViewSet):
         data = parse_data(request, 'PUT')
         id, name, remark = get_params(data, 'id', 'name', 'remark', toleration=True).values()
         file = get_by_id(id)
+        # 校验分组是否存在
+        file_group.get_by_id(file.group_id)
         # 处理文件
-        path = _file_data(request)
+        path = _file_data(request, toleration=True)
         update_fields(file, name=name, remark=remark, path=path)
         save(file)
         return Response.success(file)
 
-    @action(methods=['GET'], detail=False, url_path='page')
-    def page(self, request):
+    def list(self, request, *args, **kwargs):
         """
         分页查询文件列表
         可全量分页(当然只有自己的数据)
@@ -76,17 +82,17 @@ class FileViewSet(viewsets.ModelViewSet):
         page, page_size, name = page_params(data, 'name').values()
         files = File.objects.owner().contains(name=name)
         page_files = Paginator(files, page_size)
-        page_files.page(page)
-        return Response.success(page_files)
+        result = page_files.page(page)
+        return Response.success(result)
 
-    @action(methods=['GET'], detail=False, url_path='download/<id>')
-    def download(self, request, id):
+    @action(methods=['GET'], detail=True)
+    def download(self, request, pk):
         """
         下载文件
         """
 
         parse_data(request, 'GET')
-        file = get_by_id(id)
+        file = get_by_id(pk)
         path = file.path
         file = open(path, 'rb')
         response = FileResponse(file)

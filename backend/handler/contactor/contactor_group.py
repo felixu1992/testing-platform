@@ -13,6 +13,7 @@ class ContactorGroupSerializer(serializers.ModelSerializer):
 
 
 class ContactorGroupViewSet(viewsets.ModelViewSet):
+
     queryset = ContactorGroup.objects
 
     serializer_class = ContactorGroupSerializer
