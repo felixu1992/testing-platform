@@ -13,7 +13,6 @@ class ContactorGroupSerializer(serializers.ModelSerializer):
 
 
 class ContactorGroupViewSet(viewsets.ModelViewSet):
-
     queryset = ContactorGroup.objects
 
     serializer_class = ContactorGroupSerializer
@@ -77,8 +76,20 @@ class ContactorGroupViewSet(viewsets.ModelViewSet):
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
 
 def get_by_id(id):
+    """
+    根据 id 查询
+    """
+
     try:
         group = ContactorGroup.objects.owner().get(id=id)
     except ObjectDoesNotExist:
         raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
     return group
+
+
+def get_list_by_ids(ids):
+    """
+    根据 id 数组查询
+    """
+
+    return ContactorGroup.objects.owner().fields_in(id=ids)

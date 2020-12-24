@@ -294,7 +294,7 @@ class CaseInfo(BaseEntity):
     name = models.CharField(verbose_name='用例名称', max_length=32,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
                                         MaxLengthValidator(32, message='最大长度为 32')])
-    remark = models.CharField(verbose_name='项目备注', max_length=255, blank=True, null=True,
+    remark = models.CharField(verbose_name='用例备注', max_length=255, blank=True, null=True,
                               validators=[MinLengthValidator(1, message='最小长度为 1'),
                                           MaxLengthValidator(255, message='最大长度为 255')])
     method = models.CharField(verbose_name='请求方法', max_length=8,

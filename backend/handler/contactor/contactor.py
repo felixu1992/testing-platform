@@ -79,6 +79,16 @@ class ContactorViewSet(viewsets.ModelViewSet):
         contactors = Contactor.objects.owner().contains(name=name, phone=phone, email=email)
         page_contactors = Paginator(contactors, page_size)
         result = page_contactors.page(page)
+        # 得到所有分组 id
+        group_ids = [o.group_id for o in result.object_list]
+        group_names = {}
+        groups = contactor_group.get_list_by_ids(group_ids)
+        for group in groups:
+            group_names.update({group.id: group.name})
+        for contactor in result.object_list:
+            group_name = group_names[contactor.group_id]
+            if group_name:
+                contactor.group_name = group_name
         return Response.success(result)
 
 
