@@ -17,11 +17,11 @@ class FileGroupSerializer(serializers.ModelSerializer):
 
 class FileGroupViewSet(viewsets.ModelViewSet):
 
-    queryset = FileGroup
+    queryset = FileGroup.objects
 
     serializer_class = FileGroupSerializer
 
-    def post(self, request):
+    def create(self, request, *args, **kwargs):
         """
         创建文件分组
         """
@@ -31,21 +31,26 @@ class FileGroupViewSet(viewsets.ModelViewSet):
         save(group)
         return Response.success(group)
 
-    def delete(self, request, id):
+    def destroy(self, request, *args, **kwargs):
         """
         根据 id 删除文件分组
         """
 
         parse_data(request, 'DELETE')
+        id = kwargs['pk']
         group = get_by_id(id)
         # 判断是否被文件使用
-        count = file.count_by_group(id)
+        try:
+            from backend.handler.file.file import count_by_group
+        except ImportError:
+            raise PlatformError.error(ErrorCode.FAIL)
+        count = count_by_group(id)
         if count > 0:
             raise PlatformError.error(ErrorCode.FILE_GROUP_HAS_FILE)
         group.delete()
         return Response.def_success()
 
-    def put(self, request):
+    def update(self, request, *args, **kwargs):
         """
         修改文件分组
         """
@@ -57,8 +62,7 @@ class FileGroupViewSet(viewsets.ModelViewSet):
         save(group)
         return Response.success(group)
 
-    @action(methods=['GET'], detail=False, url_path='page')
-    def page(self, request):
+    def list(self, request, *args, **kwargs):
         """
         分页查询文件分组
 
@@ -69,8 +73,8 @@ class FileGroupViewSet(viewsets.ModelViewSet):
         page, page_size, name = page_params(data, 'name').values()
         groups = FileGroup.objects.owner().contains(name=name)
         page_group = Paginator(groups, page_size)
-        page_group.page(page)
-        return Response.success(page_group)
+        result = page_group.page(page)
+        return Response.success(result)
 
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------

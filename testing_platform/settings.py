@@ -90,17 +90,17 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
         'NAME': 'testing_platform',  # 数据库名称
-        'USER': '',  # 连接数据库的用户名称
-        'PASSWORD': '',  # 用户密码
-        'HOST': '',  # 访问的数据库的主机的ip地址
-        'PORT': '',  # 默认mysql访问端口
+        'USER': 'root',  # 连接数据库的用户名称
+        'PASSWORD': 'felixu123456',  # 用户密码
+        'HOST': '47.111.94.101',  # 访问的数据库的主机的ip地址
+        'PORT': '6306',  # 默认mysql访问端口
     }
 }
 
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': '',
+        'LOCATION': 'redis://47.111.94.101:7379',
         'OPTIONS': {
             'CONNECTION_POOL_KWARGS': {'max_connections': 100},
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
