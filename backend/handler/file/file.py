@@ -20,7 +20,6 @@ class FileSerializer(serializers.ModelSerializer):
 
 
 class FileViewSet(viewsets.ModelViewSet):
-
     queryset = File.objects
 
     serializer_class = FileSerializer
@@ -83,6 +82,16 @@ class FileViewSet(viewsets.ModelViewSet):
         files = File.objects.owner().contains(name=name)
         page_files = Paginator(files, page_size)
         result = page_files.page(page)
+        # 得到所有分组 id
+        group_ids = [o.group_id for o in result.object_list]
+        group_names = {}
+        groups = file_group.get_list_by_ids(group_ids)
+        for group in groups:
+            group_names.update({group.id: group.name})
+        for contactor in result.object_list:
+            group_name = group_names[contactor.group_id]
+            if group_name:
+                contactor.group_name = group_name
         return Response.success(result)
 
     @action(methods=['GET'], detail=True)

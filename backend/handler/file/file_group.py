@@ -16,7 +16,6 @@ class FileGroupSerializer(serializers.ModelSerializer):
 
 
 class FileGroupViewSet(viewsets.ModelViewSet):
-
     queryset = FileGroup.objects
 
     serializer_class = FileGroupSerializer
@@ -89,3 +88,11 @@ def get_by_id(id):
     except ObjectDoesNotExist:
         raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
     return group
+
+
+def get_list_by_ids(ids):
+    """
+    根据 id 数组查询
+    """
+
+    return FileGroup.objects.owner().fields_in(id=ids)
