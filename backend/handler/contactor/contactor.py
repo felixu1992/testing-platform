@@ -1,10 +1,9 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
-from rest_framework.decorators import action
-
 from backend.exception import ErrorCode, PlatformError
 from backend.models import Contactor
+from backend.handler.contactor import contactor_group
 from backend.util import Response, parse_data, get_params, update_fields, page_params, save
 
 
@@ -16,11 +15,11 @@ class ContactorSerializer(serializers.ModelSerializer):
 
 class ContactorViewSet(viewsets.ModelViewSet):
 
-    queryset = Contactor
+    queryset = Contactor.objects
 
     serializer_class = ContactorSerializer
 
-    def post(self, request):
+    def create(self, request, *args, **kwargs):
         """
         新增联系人
 
@@ -29,10 +28,12 @@ class ContactorViewSet(viewsets.ModelViewSet):
 
         body = parse_data(request, 'POST')
         contactor = Contactor(**body)
+        # 校验分组是否存在
+        contactor_group.get_by_id(contactor.group_id)
         save(contactor)
         return Response.success(contactor)
 
-    def delete(self, request, id):
+    def destroy(self, request, *args, **kwargs):
         """
         删除联系人
 
@@ -40,12 +41,13 @@ class ContactorViewSet(viewsets.ModelViewSet):
         """
 
         parse_data(request, 'DELETE')
+        id = kwargs['pk']
         contactor = get_by_id(id)
         # TODO 判断是否被用例使用
         contactor.delete()
         return Response.def_success()
 
-    def put(self, request):
+    def update(self, request, *args, **kwargs):
         """
         修改联系人
 
@@ -54,13 +56,14 @@ class ContactorViewSet(viewsets.ModelViewSet):
 
         data = parse_data(request, 'PUT')
         params_dict = get_params(data, 'id', 'name', 'phone', 'email')
-        contractor = get_by_id(params_dict['id'])
-        update_fields(contractor, **params_dict)
-        save(contractor)
-        return Response.success(contractor)
+        contactor = get_by_id(params_dict['id'])
+        update_fields(contactor, **params_dict)
+        # 校验分组是否存在
+        contactor_group.get_by_id(contactor.group_id)
+        save(contactor)
+        return Response.success(contactor)
 
-    @action(methods=['GET'], detail=False, url_path='page')
-    def page(self, request):
+    def list(self, request, *args, **kwargs):
         """
         分页查询联系人
 
@@ -75,8 +78,8 @@ class ContactorViewSet(viewsets.ModelViewSet):
         page, page_size, name, phone, email = page_params(data, 'name', 'phone', 'email').values()
         contactors = Contactor.objects.owner().contains(name=name, phone=phone, email=email)
         page_contactors = Paginator(contactors, page_size)
-        page_contactors.page(page)
-        return Response.success(page_contactors)
+        result = page_contactors.page(page)
+        return Response.success(result)
 
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------

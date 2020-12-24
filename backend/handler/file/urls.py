@@ -3,10 +3,10 @@ from rest_framework import routers
 from backend.handler.file import file, file_group
 # 联系人分组
 group_router = routers.DefaultRouter()
-group_router.register(r'group', file_group.FileGroupViewSet, basename='file_group')
+group_router.register(r'file/group', file_group.FileGroupViewSet, basename='file_group')
 # 联系人
 router = routers.DefaultRouter()
-router.register(r'', file.FileViewSet, basename='file')
+router.register(r'file', file.FileViewSet, basename='file')
 urlpatterns = (
     # 文件分组
     path('', include(group_router.urls)),

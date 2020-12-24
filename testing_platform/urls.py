@@ -41,13 +41,13 @@ urlpatterns = (
     path('user/', include('backend.handler.user.urls')),
 
     # 联系人
-    path('contactor/', include('backend.handler.contactor.urls')),
+    path('', include('backend.handler.contactor.urls')),
 
     # 文件
-    path('file/', include('backend.handler.file.urls')),
+    path('', include('backend.handler.file.urls')),
 
     # 项目
-    path('project/', include('backend.handler.project.urls')),
+    path('', include('backend.handler.project.urls')),
 
     # 用例
     path('case/', include(case_router.urls)),

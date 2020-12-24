@@ -146,14 +146,14 @@ class Contactor(BaseEntity):
     """
 
     id = models.AutoField(primary_key=True)
-    name = models.CharField(verbose_name='联系人名称', max_length=32, unique=True,
+    name = models.CharField(verbose_name='联系人名称', max_length=32,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
                                         MaxLengthValidator(32, message='最大长度为 32')])
-    email = models.CharField(verbose_name='邮箱', max_length=64, unique=True,
+    email = models.CharField(verbose_name='邮箱', max_length=64,
                              validators=[MinLengthValidator(1, message='最小长度为 1'),
                                          MaxLengthValidator(64, message='最大长度为 64'),
                                          EmailValidator(message='请输入正确的邮箱账号')])
-    phone = models.CharField(verbose_name='手机号', max_length=16, unique=True,
+    phone = models.CharField(verbose_name='手机号', max_length=16,
                              validators=[MinLengthValidator(1, message='最小长度为 1'),
                                          MaxLengthValidator(16, message='最大长度为 16'),
                                          RegexValidator(regex=r'^1[3,4,5,7,8]\d{9}$', message='请输入正确的手机号')])

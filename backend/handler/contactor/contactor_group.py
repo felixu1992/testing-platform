@@ -2,7 +2,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
 from backend.exception import ErrorCode, PlatformError
-from backend.handler.contactor.contactor import count_by_group
 from backend.models import ContactorGroup
 from backend.util import Response, get_params, parse_data, page_params, update_fields, save
 
@@ -38,6 +37,10 @@ class ContactorGroupViewSet(viewsets.ModelViewSet):
         id = kwargs['pk']
         group = get_by_id(id)
         # 判断是否被联系人使用
+        try:
+            from backend.handler.contactor.contactor import count_by_group
+        except ImportError:
+            raise PlatformError.error(ErrorCode.FAIL)
         count = count_by_group(id)
         if count > 0:
             raise PlatformError.error(ErrorCode.CONTACTOR_GROUP_HAS_CONTACTOR)

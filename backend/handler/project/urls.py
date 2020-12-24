@@ -4,10 +4,10 @@ from backend.handler.project import project, project_group
 
 # 项目分组
 group_router = routers.DefaultRouter()
-group_router.register(r'group', project_group.ProjectGroupViewSet, basename='project_group')
+group_router.register(r'project/group', project_group.ProjectGroupViewSet, basename='project_group')
 # 项目
 router = routers.DefaultRouter()
-router.register(r'', project.ProjectViewSet, basename='project')
+router.register(r'project', project.ProjectViewSet, basename='project')
 urlpatterns = (
     # 项目分组
     path('', include(group_router.urls)),
