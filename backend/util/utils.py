@@ -18,8 +18,10 @@ def parse_data(request, method):
         raise PlatformError.error_args(ErrorCode.HTTP_METHOD_NOT_SUPPORTED, method)
     # POST 和 PUT json 从 body 中取 form data 从 POST 中取
     if method == 'POST' or method == 'PUT':
-        if request.content_type == 'application/json':
-            data = json.loads(str(request.body, 'utf-8'))
+        if 'application/json' in request.content_type:
+            # application/json;charset=xxx
+            json_encoding = get_encoding(request.content_type)
+            data = json.loads(str(request.body, json_encoding))
         else:
             data = request.POST
     # DELETE 和 GET 从 GET 中取
@@ -34,6 +36,21 @@ def parse_data(request, method):
         result = data
     result.update({'owner': UserHolder.current_user()})
     return result
+
+
+def get_encoding(content_type):
+    # application/json;charset=xxx
+    split = content_type.split(';')
+    if len(split) <= 1:
+        return 'utf-8'
+    else:
+        # charset=xxx
+        charset_pair = split[1]
+        pair_split = charset_pair.split('=')
+        if len(pair_split) > 1:
+            return pair_split[1]
+        else:
+            return 'utf-8'
 
 
 def get_params(data, *args, toleration=True):
