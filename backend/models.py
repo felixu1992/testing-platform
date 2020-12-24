@@ -268,7 +268,7 @@ class Project(BaseEntity):
     host = models.CharField(verbose_name='项目统一 host', max_length=255, blank=True, null=True)
     owner = models.IntegerField(verbose_name='项目拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
     group_id = models.IntegerField(verbose_name='分组 id', default=0, validators=[MinValueValidator(1, message='最小值为 1')])
-    notify = models.BooleanField(verbose_name='是否发送通知', blank=True, null=True, default=True)
+    notify = models.BooleanField(verbose_name='是否发送通知', blank=True, null=True, default=False)
 
     class Meta:
         # 表名

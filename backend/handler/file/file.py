@@ -88,10 +88,10 @@ class FileViewSet(viewsets.ModelViewSet):
         groups = file_group.get_list_by_ids(group_ids)
         for group in groups:
             group_names.update({group.id: group.name})
-        for contactor in result.object_list:
-            group_name = group_names[contactor.group_id]
+        for file in result.object_list:
+            group_name = group_names[file.group_id]
             if group_name:
-                contactor.group_name = group_name
+                file.group_name = group_name
         return Response.success(result)
 
     @action(methods=['GET'], detail=True)

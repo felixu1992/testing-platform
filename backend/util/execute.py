@@ -70,7 +70,7 @@ class Executor:
         """
 
         # 循环执行用例
-        if self.case_infos and len(self.case_infos) > 0:
+        if self.case_infos:
             for case_info in self.case_infos:
                 self.__do_execute(case_info)
         return self.reports

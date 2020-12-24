@@ -6,6 +6,7 @@ from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.handler.case import case_info
+from backend.handler.project import project_group
 from backend.handler.record import report, record
 from backend.models import Project, CaseInfo
 from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params, Executor, save, batch_save
@@ -15,26 +16,28 @@ from backend.settings import IGNORED, FAILED, PASSED
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ['id', 'name', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'remark', 'headers', 'host', 'group_id', 'notify', 'created_at', 'updated_at']
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
 
-    queryset = Project
+    queryset = Project.objects
 
     serializer_class = ProjectSerializer
 
-    def post(self, request):
+    def create(self, request, *args, **kwargs):
         """
         创建项目
         """
 
         body = parse_data(request, 'POST')
         project = Project(**body)
+        # 校验分组是否存在
+        project_group.get_by_id(project.group_id)
         save(project)
         return Response.success(project)
 
-    def delete(request, id):
+    def destroy(self, request, *args, **kwargs):
         """
         根据 id 删除项目
 
@@ -45,25 +48,27 @@ class ProjectViewSet(viewsets.ModelViewSet):
         """
 
         parse_data(request, 'DELETE')
+        id = kwargs['pk']
         project = get_by_id(id)
         project.delete()
         # TODO 删用例和报告
         return Response.def_success()
 
-    def put(self, request):
+    def update(self, request, *args, **kwargs):
         """
         修改项目信息
         """
 
         data = parse_data(request, 'PUT')
-        params = get_params(data, 'id', 'name', 'remark', 'cookies', 'headers', 'host', toleration=True)
+        params = get_params(data, 'id', 'name', 'remark', 'headers', 'host', toleration=True)
         project = get_by_id(params['id'])
         update_fields(project, **params)
+        # 校验分组是否存在
+        project_group.get_by_id(project.group_id)
         save(project)
         return Response.success(project)
 
-    @action(methods=['GET'], detail=False, url_path='page')
-    def page(self, request):
+    def list(self, request, *args, **kwargs):
         """
         分页查询项目
 
@@ -76,15 +81,26 @@ class ProjectViewSet(viewsets.ModelViewSet):
         page, page_size, name, group_id = page_params(data, 'name', 'group_id').values()
         projects = Project.objects.filter(owner=UserHolder.current_user()).exact(group_id=group_id).contains(name=name)
         page_projects = Paginator(projects, page_size)
-        page_projects.page(page)
-        return Response.success(projects)
+        result = page_projects.page(page)
+        # 得到所有分组 id
+        group_ids = [o.group_id for o in result.object_list]
+        group_names = {}
+        groups = project_group.get_list_by_ids(group_ids)
+        for group in groups:
+            group_names.update({group.id: group.name})
+        for project in result.object_list:
+            group_name = group_names[project.group_id]
+            if group_name:
+                project.group_name = group_name
+        return Response.success(result)
 
-    def get(self, request, id):
+    def retrieve(self, request, *args, **kwargs):
         """
         根据 id 查询项目详细信息
         """
 
         parse_data(request, 'GET')
+        id = kwargs['pk']
         return Response.success(get_by_id(id))
 
     @action(methods=['POST'], detail=False, url_path='copy')
@@ -98,19 +114,23 @@ class ProjectViewSet(viewsets.ModelViewSet):
         """
 
         data = parse_data(request, 'POST')
-        old_project = get_by_id(get_params(data, 'id'))
-        new_project = Project(old_project.__dict__.copy())
+        params = get_params(data, 'id')
+        old_project = get_by_id(params['id'])
+        new_project = Project()
+        new_project.__dict__ = old_project.__dict__.copy()
         new_project.id = None
         new_project.name = new_project.name + '_copy_' + str(random.randint(0, 99999))
         save(new_project)
-        case_infos = case_info.list_by_project(old_project)
+        case_infos = case_info.list_by_project(old_project.id)
         new_infos = []
         for info in case_infos:
-            new_case_info = CaseInfo(info.__dict__.copy())
+            new_case_info = CaseInfo()
+            new_case_info.__dict__ = info.__dict__.copy()
             new_case_info.id = None
             new_case_info.name = new_case_info.name + '_copy_' + str(random.randint(0, 99999))
             new_infos.append(new_case_info)
-        batch_save(CaseInfo.objects, new_infos)
+        if new_infos:
+            batch_save(CaseInfo.objects, new_infos)
         return Response.success(new_project)
 
     @action(methods=['POST'], detail=False, url_path='execute')
@@ -123,8 +143,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
         """
 
         data = parse_data(request, 'POST')
-        project = get_by_id(get_params(data, 'id'))
+        params = get_params(data, 'id')
+        project = get_by_id(params['id'])
         case_infos = case_info.list_by_project(project.id)
+        if not case_infos:
+            raise PlatformError.error(ErrorCode.PROJECT_NOT_HAVE_CASES)
         executor = Executor(case_infos=case_infos, project=project)
         reports = executor.execute()
         # 构建记录
