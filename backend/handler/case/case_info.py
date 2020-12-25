@@ -1,3 +1,4 @@
+import json
 import random
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -11,8 +12,8 @@ from backend.models import CaseInfo
 from backend.util import UserHolder, Response, parse_data, page_params, get_params, update_fields, Executor, save
 
 fields_cache = ['id', 'name', 'remark', 'method', 'host', 'path', 'params', 'extend_keys', 'extend_values',
-                'headers', 'expected_keys', 'expected_values', 'check_step', 'expected_http_status', 'check_status',
-                'run', 'developer', 'notify', 'sort', 'delay', 'sample']
+                'headers', 'expected_keys', 'expected_values', 'expected_http_status', 'check_status', 'run',
+                'developer', 'notify', 'sort', 'delay', 'sample']
 
 
 class CaseInfoSerializer(serializers.ModelSerializer):
@@ -36,8 +37,9 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
 
         body = parse_data(request, 'POST')
         case_info = CaseInfo(**body)
-        # 校验开发者和项目
-        check_params(case_info.developer, case_info.project_id)
+        # 参数校验
+        check_params(case_info)
+        encoding(case_info)
         save(case_info)
         return Response.success(case_info)
 
@@ -60,11 +62,12 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         """
 
         data = parse_data(request, 'PUT')
-        param_dict = get_params(data, fields_cache)
+        param_dict = get_params(data, *fields_cache)
         case_info = get_by_id(param_dict['id'])
         update_fields(case_info, **param_dict)
-        # 校验开发者和项目
-        check_params(case_info.developer, case_info.project_id)
+        # 参数校验
+        check_params(case_info)
+        encoding(case_info)
         save(case_info)
         return Response.success(case_info)
 
@@ -93,14 +96,16 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         page_case_infos = Paginator(case_infos, page_size)
         result = page_case_infos.page(page)
         # 得到所有开发者 id
-        developer_ids = [o.developer for o in result.object_list]
+        developer_ids = [o.developer for o in result.object_list if o.developer]
         developer_names = {}
         developers = contactor.get_list_by_ids(developer_ids)
         for developer in developers:
             developer_names.update({developer.id: developer.name})
         for case_info in result.object_list:
-            case_info.developer_name = developer_names[case_info.developer]
+            if case_info.developer:
+                case_info.developer_name = developer_names[case_info.developer]
             case_info.project_name = pro.name
+            decoding(case_info)
         return Response.success(result)
 
     def retrieve(self, request, *args, **kwargs):
@@ -109,7 +114,9 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         """
 
         parse_data(request, 'GET')
-        return Response.success(get_by_id(kwargs['pk']))
+        case_info = get_by_id(kwargs['pk'])
+        decoding(case_info)
+        return Response.success(case_info)
 
     @action(methods=['POST'], detail=False, url_path='copy')
     def copy(self, request):
@@ -121,11 +128,15 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         """
 
         data = parse_data(request, 'POST')
-        old_case_info = get_by_id(get_params(data, 'id'))
+        params = get_params(data, 'id')
+        old_case_info = get_by_id(params['id'])
         new_case_info = CaseInfo()
         new_case_info.__dict__ = old_case_info.__dict__.copy()
         new_case_info.id = None
         new_case_info.name = new_case_info.name + '_copy_' + str(random.randint(0, 99999))
+        # 获取最大的 sort 值
+        max_sort = CaseInfo.objects.owner().order_by('sort').values('sort').first()
+        new_case_info.sort = int(max_sort['sort']) + 1
         save(new_case_info)
         return Response.success(new_case_info)
 
@@ -163,7 +174,8 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         """
 
         data = parse_data(request, 'POST')
-        case_info = get_by_id(get_params(data, 'id'))
+        params = get_params(data, 'id')
+        case_info = get_by_id(params['id'])
         pro = project.get_by_id(case_info.project_id)
         executor = Executor(case_infos=[case_info], project=pro)
         reports = executor.execute()
@@ -172,16 +184,32 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
 
-def check_params(developer, project_name):
+def check_params(case_info):
     """
     对用例的参数进行校验
 
     校验开发者是否存在
     校验项目是否存在
+    校验预期字段和预期值列表是否匹配
+    校验注入字段和注入值列表是否匹配
     """
-    if developer:
-        contactor.get_by_id(developer)
-    project.get_by_id(project_name)
+
+    # 开发者
+    if case_info.developer:
+        contactor.get_by_id(case_info.developer)
+    # 项目
+    project.get_by_id(case_info.project_id)
+    # 预期
+    if (case_info.expected_keys is None and case_info.expected_values) or (
+            case_info.expected_keys and case_info.expected_values is None) or (
+            (case_info.expected_keys and case_info.expected_values) and len(case_info.expected_keys) != len(
+        case_info.expected_values)):
+        raise PlatformError.error(ErrorCode.EXPECTED_NOT_ALLOWED)
+    if (case_info.extend_keys is None and case_info.extend_values) or (
+            case_info.extend_keys and case_info.extend_values is None) or (
+            (case_info.extend_keys and case_info.extend_values) and len(case_info.extend_keys) != len(
+        case_info.extend_values)):
+        raise PlatformError.error(ErrorCode.DEPEND_NOT_ALLOWED)
 
 
 def get_by_id(id):
@@ -202,3 +230,33 @@ def list_by_project(project_id):
     """
 
     return CaseInfo.objects.filter(owner=UserHolder.current_user(), project_id=project_id)
+
+
+def encoding(case_info):
+    """
+    对部分参数进行编码操作
+    """
+
+    if case_info.extend_keys:
+        case_info.extend_keys = json.dumps(case_info.extend_keys)
+    if case_info.extend_values:
+        case_info.extend_values = json.dumps(case_info.extend_values)
+    if case_info.expected_keys:
+        case_info.expected_keys = json.dumps(case_info.expected_keys)
+    if case_info.expected_values:
+        case_info.expected_values = json.dumps(case_info.expected_values)
+
+
+def decoding(case_info):
+    """
+    对部分参数进行解码操作
+    """
+
+    if case_info.extend_keys:
+        case_info.extend_keys = json.loads(case_info.extend_keys)
+    if case_info.extend_values:
+        case_info.extend_values = json.loads(case_info.extend_values)
+    if case_info.expected_keys:
+        case_info.expected_keys = json.loads(case_info.expected_keys)
+    if case_info.expected_values:
+        case_info.expected_values = json.loads(case_info.expected_values)

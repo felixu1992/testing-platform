@@ -29,6 +29,8 @@ class ErrorCode(Enum):
 
     # 用例
     CASE_CREATE_REPORT_FAILED = 40000, '用例执行生成结果失败，请稍后再试'
+    EXPECTED_NOT_ALLOWED = 40001, '预期字段和预期值个数不匹配'
+    DEPEND_NOT_ALLOWED = 40002, '依赖参数和依赖取值个数不匹配'
 
     def __init__(self, code, message):
         self.code = code

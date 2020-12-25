@@ -310,7 +310,6 @@ class CaseInfo(BaseEntity):
     headers = models.JSONField(verbose_name='请求头', blank=True, null=True)
     expected_keys = models.TextField(verbose_name='预期字段', blank=True, null=True)
     expected_values = models.TextField(verbose_name='预期值', blank=True, null=True)
-    check_step = models.TextField(verbose_name='校验步骤', blank=True, null=True)
     expected_http_status = models.IntegerField(verbose_name='Http 状态码', blank=True, null=True, default=200,
                                                validators=[MinValueValidator(1, message='最小值为 1')])
     check_status = models.BooleanField(verbose_name='是否校验 Http 状态', default=False)
