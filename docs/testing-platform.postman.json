@@ -1159,14 +1159,14 @@
 							}
 						},
 						"url": {
-							"raw": "localhost:8000/project/copy/",
+							"raw": "localhost:8000/project/execute/",
 							"host": [
 								"localhost"
 							],
 							"port": "8000",
 							"path": [
 								"project",
-								"copy",
+								"execute",
 								""
 							]
 						}
@@ -1196,6 +1196,417 @@
 					}
 				}
 			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "用例管理",
+			"item": [
+				{
+					"name": "用例新增",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRhIjoxLCJ0aW1lc3RhbXAiOjE2MDg2MjkzNTU4MjF9.3p5fFTe7YcPiXwtY8b7n9bgy2ITf7L0ZdF74VMmN5x0"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"获取设备模型模板列表adf\",\r\n    \"remark\": \"查询设备模型模板API\",\r\n    \"method\": \"get\",\r\n    \"host\": \"http://10.30.30.96:40000\",\r\n    \"path\": \"/api/device/dmc/deviceModelTemplate\",\r\n    \"expected_keys\": [\"code\", \"total\"],\r\n    \"expected_values\": [\"0\", \"85\"], \r\n    \"sort\": 2,\r\n    \"project_id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8000/case/",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"case",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "用例查询",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRhIjoxLCJ0aW1lc3RhbXAiOjE2MDg2MjkzNTU4MjF9.3p5fFTe7YcPiXwtY8b7n9bgy2ITf7L0ZdF74VMmN5x0"
+							}
+						],
+						"url": {
+							"raw": "localhost:8000/case/1/",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"case",
+								"1",
+								""
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "test1",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "用例更新",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRhIjoxLCJ0aW1lc3RhbXAiOjE2MDg2MjkzNTU4MjF9.3p5fFTe7YcPiXwtY8b7n9bgy2ITf7L0ZdF74VMmN5x0"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 1,\r\n    \"name\": \"获取设备模型模板列表\",\r\n    \"remark\": \"查询设备模型模板API\",\r\n    \"method\": \"get\",\r\n    \"host\": \"http://10.30.30.96:40000\",\r\n    \"path\": \"/api/device/dmc/deviceModelTemplate\",\r\n    \"expected_keys\": [[\"code\"], [\"data\", \"total\"]],\r\n    \"expected_values\": [\"0\", \"85\"],\r\n    \"sort\": 1,\r\n    \"project_id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8000/case/1/",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"case",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "用例更新排序",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRhIjoxLCJ0aW1lc3RhbXAiOjE2MDg2MjkzNTU4MjF9.3p5fFTe7YcPiXwtY8b7n9bgy2ITf7L0ZdF74VMmN5x0"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 4,\r\n    \"name\": \"fadfasdf\",\r\n    \"remark\": \"fadfadsfa\",\r\n    \"headers\": \"{\\\"aaa\\\": \\\"bbb\\\"}\",\r\n    \"host\": \"https://www.baidu.com\",\r\n    \"group_id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8000/project/4/",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"project",
+								"4",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "用例分页查询",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRhIjoxLCJ0aW1lc3RhbXAiOjE2MDg2MjkzNTU4MjF9.3p5fFTe7YcPiXwtY8b7n9bgy2ITf7L0ZdF74VMmN5x0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "localhost:8000/case/?page=1&page_size=10&project_id=1",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"case",
+								""
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "page_size",
+									"value": "10"
+								},
+								{
+									"key": "project_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "用例删除",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRhIjoxLCJ0aW1lc3RhbXAiOjE2MDg2MjkzNTU4MjF9.3p5fFTe7YcPiXwtY8b7n9bgy2ITf7L0ZdF74VMmN5x0",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "localhost:8000/case/2/",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"case",
+								"2",
+								""
+							]
+						},
+						"description": "根据 id 删除"
+					},
+					"response": []
+				},
+				{
+					"name": "用例复制",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRhIjoxLCJ0aW1lc3RhbXAiOjE2MDg2MjkzNTU4MjF9.3p5fFTe7YcPiXwtY8b7n9bgy2ITf7L0ZdF74VMmN5x0"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8000/project/copy/",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"project",
+								"copy",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "用例执行",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRhIjoxLCJ0aW1lc3RhbXAiOjE2MDg2MjkzNTU4MjF9.3p5fFTe7YcPiXwtY8b7n9bgy2ITf7L0ZdF74VMmN5x0"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8000/project/copy/",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"project",
+								"copy",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "用例导入",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRhIjoxLCJ0aW1lc3RhbXAiOjE2MDg2MjkzNTU4MjF9.3p5fFTe7YcPiXwtY8b7n9bgy2ITf7L0ZdF74VMmN5x0"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8000/project/copy/",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"project",
+								"copy",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "用例兼容导入",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRhIjoxLCJ0aW1lc3RhbXAiOjE2MDg2MjkzNTU4MjF9.3p5fFTe7YcPiXwtY8b7n9bgy2ITf7L0ZdF74VMmN5x0"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8000/project/copy/",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"project",
+								"copy",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "用例导出",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRhIjoxLCJ0aW1lc3RhbXAiOjE2MDg2MjkzNTU4MjF9.3p5fFTe7YcPiXwtY8b7n9bgy2ITf7L0ZdF74VMmN5x0"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8000/project/copy/",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"project",
+								"copy",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "c6d2ab40-aa18-44db-ac4a-2da415b40859",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "debf4d5f-014d-4190-827d-65cd91d233b7",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "记录管理",
+			"item": [],
 			"protocolProfileBehavior": {}
 		}
 	],
