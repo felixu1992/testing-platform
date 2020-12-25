@@ -373,19 +373,17 @@ class Report(BaseEntity):
     """
     测试报告
     """
-
-    id = models.IntegerField(verbose_name='等同于用例 id', default=0, primary_key=True,
-                             validators=[MinValueValidator(1, message='最小值为 1')])
-    name = models.CharField(verbose_name='用例名称', max_length=32, unique=True,
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(verbose_name='用例名称', max_length=32,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
                                         MaxLengthValidator(32, message='最大长度为 32')])
-    remark = models.CharField(verbose_name='项目备注', max_length=255, default=None,
+    remark = models.CharField(verbose_name='用例备注', max_length=255, blank=True, null=True,
                               validators=[MinLengthValidator(1, message='最小长度为 1'),
                                           MaxLengthValidator(255, message='最大长度为 255')])
     method = models.CharField(verbose_name='请求方法', max_length=8,
                               validators=[MinLengthValidator(1, message='最小长度为 1'),
                                           MaxLengthValidator(8, message='最大长度为 8')])
-    host = models.CharField(verbose_name='请求 host，没填会使用项目的', max_length=255, default=None)
+    host = models.CharField(verbose_name='请求 host，没填会使用项目的', max_length=255, blank=True, null=True)
     path = models.CharField(verbose_name='请求地址', max_length=255,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
                                         MaxLengthValidator(255, message='最大长度为 255')])
@@ -395,21 +393,21 @@ class Report(BaseEntity):
     headers = models.JSONField(verbose_name='请求头', blank=True, null=True)
     expected_keys = models.TextField(verbose_name='预期字段', blank=True, null=True)
     expected_values = models.TextField(verbose_name='预期值', blank=True, null=True)
-    check_step = models.TextField(verbose_name='校验步骤', blank=True, null=True)
-    expected_http_status = models.IntegerField(verbose_name='Http 状态码', default=200,
+    expected_http_status = models.IntegerField(verbose_name='Http 状态码', blank=True, null=True, default=200,
                                                validators=[MinValueValidator(1, message='最小值为 1')])
     check_status = models.BooleanField(verbose_name='是否校验 Http 状态', default=False)
     run = models.BooleanField(verbose_name='是否运行', default=True)
     owner = models.IntegerField(verbose_name='拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
-    developer = models.IntegerField(verbose_name='接口开发者', default=0,
-                                    validators=[MinValueValidator(1, message='最小值为 1')])
+    developer = models.IntegerField(verbose_name='接口开发者', blank=True, null=True)
     notify = models.BooleanField(verbose_name='是否通知开发者', default=False)
-    project_id = models.IntegerField(verbose_name='关联项目 id',
-                                     validators=[MinValueValidator(1, message='最小值为 1')])
+    project_id = models.IntegerField(verbose_name='关联项目 id', validators=[MinValueValidator(1, message='最小值为 1')])
     sort = models.IntegerField(verbose_name='接口排序', default=0, validators=[MinValueValidator(1, message='最小值为 1')])
-    status = models.CharField(verbose_name='执行状态', max_length=8,
-                              validators=[MinLengthValidator(1, message='最小长度为 1'),
-                                          MaxLengthValidator(8, message='最大长度为 8')])
+    delay = models.IntegerField(verbose_name='延迟执行时长, 单位秒, 最长延时五分钟即 300', default=0,
+                                validators=[MinValueValidator(0, message='最小值为 0'),
+                                            MaxValueValidator(300, message='最大值为 300')])
+    sample = models.JSONField(verbose_name='结果示例，用于接口依赖时方便直接获得取值步骤', blank=True, null=True)
+    case_id = models.IntegerField(verbose_name='等同于用例 id', default=0,
+                             validators=[MinValueValidator(1, message='最小值为 1')])
     response_code = models.CharField(verbose_name='响应状态', max_length=8, blank=True, null=True,
                                      validators=[MinLengthValidator(1, message='最小长度为 1'),
                                                  MaxLengthValidator(8, message='最大长度为 8')])

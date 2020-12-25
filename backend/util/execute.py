@@ -16,17 +16,13 @@ def get_value(source, steps):
 
     取值步骤为 . 连接，如：data.records.0.name 含义为取 data 下 records 列表的第 0 条的 name 字段的值
     """
-    # 分割取值步骤为列表
-    keys = steps.split(".")
     try:
         # 循环取值步骤字典
-        for i in range(0, len(keys)):
-            # 取字段值
-            key = keys[i]
+        for step in steps:
             # 如果为数字则转为数字(数字代表从列表取值)，否则为字符
-            key = key if not key.isdigit() else int(key)
+            step = step if not step.isdigit() else int(step)
             # 从结果字典取值
-            source = source[key]
+            source = source[step]
     # 出现异常直接填充为空字符
     except KeyError:
         return None
@@ -34,25 +30,29 @@ def get_value(source, steps):
 
 
 def set_value(value, target, steps):
-    # 以 . 分割插入步骤为数组
-    keys = steps.split(".")
     # 循环找到对应位置插入
-    for i in range(0, len(keys)):
-        key = keys[i]
+    for i in range(0, len(steps)):
+        step = steps[i]
         # 如果当前步骤为字符串类型的数字，转为 int
-        key = key if not key.isdigit() else int(key)
+        step = step if not step.isdigit() else int(step)
         # 取到最后了，直接将值插入该位置
-        if i == len(keys) - 1:
-            target[key] = value
+        if i == len(steps) - 1:
+            target[step] = value
         # 否则继续往下找插入位置
         else:
             try:
                 # 从目标中取当前 key 对应的值为下一次的目标
-                target = target[key]
+                target = target[step]
             except KeyError:
                 # 报错则下一次目标为空字典
-                target.update({key: {}})
-                target = target[key]
+                target.update({step: {}})
+                target = target[step]
+
+
+class Process:
+    def __init__(self):
+        self.depend = -1
+        self.steps = []
 
 
 class Executor:
@@ -64,6 +64,8 @@ class Executor:
         for case_info in case_infos:
             report = Report()
             report.__dict__ = case_info.__dict__.copy()
+            report.id = None
+            report.case_id = case_info.id
             self.reports.append(report)
 
     def execute(self):
@@ -87,7 +89,7 @@ class Executor:
         """
 
         # 过滤出结果
-        report = filter_obj_single(self.reports, 'id', case_info.id)
+        report = filter_obj_single(self.reports, 'case_id', case_info.id)
         # 如果为空则添加一个结果
         if report is None:
             raise PlatformError.error(ErrorCode.CASE_CREATE_REPORT_FAILED)
@@ -111,7 +113,7 @@ class Executor:
         # 校验结果
         self.__check_status(report, result, time_used)
         # print 结果
-        self.__print_result(report, url)
+        # self.__print_result(report, url)
 
     def __build_request(self, case_info):
         """
@@ -140,9 +142,9 @@ class Executor:
         headers = {}
         # 父级 header
         if self.project and self.project.headers:
-            headers.update(self.project.headers)
+            headers.update(json.loads(self.project.headers))
         if case_info.headers:
-            headers.update(case_info.headers)
+            headers.update(json.loads(case_info.headers))
         return headers
 
     def __build_params(self, case_info, headers):
@@ -186,7 +188,7 @@ class Executor:
             result.update({'message': 'host 不能为空'})
             case_info.response_content = '请求路径缺失，接口未执行'
             return None
-        if self.project and self.project.host:
+        if case_info.host is None:
             case_info.host = self.project.host
         self.__parse_path(case_info)
         url = case_info.host + case_info.path
@@ -250,44 +252,41 @@ class Executor:
         code = result['code']
         # 防止 code 为字符串类型的数字
         report.response_code = code if isinstance(code, int) else int(code)
-
         # 定义预期和结果字典
         expected = {}
         response = {}
         # 预期字段以 , 分割为预期字段的列表
-        expected_keys = report.expected_key.split(',')
+        expected_keys = report.expected_keys
         # 预期结果以 , 分割为预期结果的列表
-        expected_values = str(report.expected_value).split(',')
-        # 校验步骤以 , 分割为列表
-        check_steps = report.check_step.split(',')
+        expected_values = report.expected_values
         # 循环预期字段的个数
-        for i in range(0, len(expected_keys)):
-            # 将预期字段对应的预期值以 : 分割，得到预期值的取值过程列表
-            row_steps = expected_values[i].split(":")
+        for key, p in zip(expected_keys, expected_values):
             # 如果预期值直接给出，则 row_steps 长度为 1
-            if len(row_steps) == 1:
+            steps = p['steps']
+            if 'depend' not in p:
                 # 将预期字段以及预期值放入预期字典
-                expected.update({expected_keys[i]: row_steps[0]})
+                expected.update({key: p['value']})
+
             else:
                 # 取依赖的行数据
-                ci = [ci for ci in self.reports if getattr(ci, 'id') == int(row_steps[0])]
-                ci = ci[0]
+                report = filter_obj_single(self.reports, 'case_id', int(p['depend']))
                 # 没取到直接判定失败
-                if not ci:
-                    report.status = 'failed'
+                if not report:
+                    report.status = FAILED
                     return
                 # 否则按照依赖步骤取出依赖值，填充预期字典
-                ci = json.loads(getattr(ci, 'response_content'))
-                expected.update({expected_keys[i]: get_value(ci, row_steps[1])})
+                content = json.loads(report.response_content)
+                expected.update({key: get_value(content, steps)})
+
             # 将预期字段对应的结果从结果中取出(由于这种情况)
-            response.update({expected_keys[i]: str(get_value(result, check_steps[i]))})
+            response.update({key: str(get_value(result, steps))})
         # 填入结果
         if expected == response:
             report.status = PASSED
         else:
             report.status = FAILED
         # result.pop('ignore')
-        # result.pop('http_code')
+        result.pop('http_code')
         # 填充结果到用例对象中
         report.response_content = json.dumps(result, ensure_ascii=False)
 
@@ -308,49 +307,46 @@ class Executor:
         """
         用于解析当前用例信息中参数需要的占位符
 
-        即将 ex_keys 中的字段，以及 ex_values 中的值解析到 params 中
+        即将 extend_keys 中的字段，以及 extend_values 中的值解析到 params 中
         """
 
         # 获取当前用例的 params
-        params = getattr(case_info, 'params')
+        params = case_info.params
         params = {} if params is None else json.loads(params)
-        # 取当前用例的 ex_keys
-        ex_keys = getattr(case_info, 'ex_keys')
+        # 取当前用例的 extend_keys
+        extend_keys = case_info.extend_keys
         # 如果有需要处理的占位符
-        if ex_keys != '' and ex_keys is not None:
-            # 以 , 分割 ex_keys 为列表
-            keys = ex_keys.split(",")
-            # 以 , 分割 ex_values 为列表
-            ex_values = getattr(case_info, 'ex_values').split(",")
-            # 循环需要加入的参数字段
-            for i in range(0, len(keys)):
-                # 将需要加入的值以 : 分割，得到依赖的行数和取值步骤
-                row_steps = ex_values[i].split(":")
-                # 用对应行和取值步骤去取值
-                value = self.__get_value(row_steps[0], row_steps[1])
+        if extend_keys:
+            # 循环注入的字段和取值字典
+            for key, p in zip(extend_keys, case_info.extend_values):
+                process = Process()
+                process.__dict__ = p
+                # 取值
+                value = self.__get_value(process.depend, process.steps)
                 # 取到的值为数字类型的字符串转为 int 类型
                 if isinstance(value, str) and value.isdigit():
                     value = int(value)
                 # 将取出的值插入以对应的字段名插入到 params 中
-                set_value(value, params, keys[i])
+                set_value(value, params, key)
         # 处理完成后设置回用例对象中
-        setattr(case_info, 'params', params)
+        case_info.params = params
 
     def __parse_path(self, case_info):
         """
         用于解析 path 中的占位符
 
         要求：
-        在 ex_keys 中填写对应着 url 占位符的字段
-        在 ex_values 中填写取值步骤
+        在 extend_keys 中填写对应着 url 占位符的字段
+        在 extend_values 中填写取值步骤
         """
 
         # 取当前用例对象的 path 字段
-        path = getattr(case_info, 'path')
+        path = case_info.path
         # 取当前用例对象中的 params 字段
         params = getattr(case_info, 'params')
         # 正则取占位符对应的字段
         pt = re.compile(r'[{](.*?)[}]')
+        # TODO 可以支持 url 上的占位符步骤取值
         keys = re.findall(pt, path)
         # 如果没有占位符直接返回
         if len(keys) == 0:
@@ -366,7 +362,7 @@ class Executor:
             if value:
                 path = path.replace('{' + key + '}', value)
         # 处理完成后设置回用例对象中
-        setattr(case_info, 'path', path)
+        case_info.path = path
 
     def __get_value(self, row, steps):
         """
@@ -374,17 +370,17 @@ class Executor:
         """
 
         # 取依赖的行数据
-        ci = filter_obj_single(self.case_infos, 'id', int(row))
+        report = filter_obj_single(self.reports, 'case_id', int(row))
         # 没有取到返回 None
-        if not ci:
+        if not report:
             return None
         # 否则取出依赖行数据中的请求响应结果
-        content = getattr(ci, 'response_content')
+        content = report.response_content
         # 有值转为字典
         if content:
-            ci = json.loads(content)
+            content = json.loads(content)
         # 无值直接返回 None
         else:
             return None
         # 以给定对象和取值步骤去取出对应数据
-        return get_value(ci, steps)
+        return get_value(content, steps)

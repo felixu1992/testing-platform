@@ -177,9 +177,10 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         params = get_params(data, 'id')
         case_info = get_by_id(params['id'])
         pro = project.get_by_id(case_info.project_id)
+        decoding(case_info)
         executor = Executor(case_infos=[case_info], project=pro)
         reports = executor.execute()
-        return Response.success(reports[0])
+        return Response.def_success()
 
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
@@ -210,6 +211,7 @@ def check_params(case_info):
             (case_info.extend_keys and case_info.extend_values) and len(case_info.extend_keys) != len(
         case_info.extend_values)):
         raise PlatformError.error(ErrorCode.DEPEND_NOT_ALLOWED)
+    # TODO 对注入参数、预期值等的数据格式做校验
 
 
 def get_by_id(id):
