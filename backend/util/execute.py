@@ -62,7 +62,9 @@ class Executor:
         self.project = project
         self.reports = []
         for case_info in case_infos:
-            self.reports.append(Report(case_info.__dict__.copy()))
+            report = Report()
+            report.__dict__ = case_info.__dict__.copy()
+            self.reports.append(report)
 
     def execute(self):
         """

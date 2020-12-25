@@ -12,7 +12,7 @@ class ErrorCode(Enum):
     HTTP_METHOD_NOT_SUPPORTED = 100, '当前请求仅支持 {} 方法'
     LOGIN_FAILED = 101, '登录失败，请检查用户名或密码是否正确'
     VALIDATION_ERROR = 102, '参数校验失败'
-    DATA_NOT_EXISTED = 103, '当前数据不存在，请检查数据是否正确'
+    DATA_NOT_EXISTED = 103, '{} 根据 {} 查询的数据不存在，请检查入参是否正确'
     MISSING_NECESSARY_KEY = 104, '缺少必要参数: {}'
     MISSING_AUTHORITY = 105, '请检查您是否具有访问此地址的权限'
     REQUIRE_LOGIN = 106, '请(重新)登录'

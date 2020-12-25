@@ -83,7 +83,7 @@ def get_by_id(id):
     try:
         group = ProjectGroup.objects.owner().get(id=id)
     except ObjectDoesNotExist:
-        raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
+        raise PlatformError.error_args(ErrorCode.DATA_NOT_EXISTED, '项目分组', 'id')
     return group
 
 

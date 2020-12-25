@@ -14,7 +14,6 @@ class ContactorSerializer(serializers.ModelSerializer):
 
 
 class ContactorViewSet(viewsets.ModelViewSet):
-
     queryset = Contactor.objects
 
     serializer_class = ContactorSerializer
@@ -102,7 +101,7 @@ def get_by_id(id):
     try:
         contactor = Contactor.objects.owner().get(id=id)
     except ObjectDoesNotExist:
-        raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
+        raise PlatformError.error_args(ErrorCode.DATA_NOT_EXISTED, '联系人', 'id')
     return contactor
 
 
@@ -112,3 +111,11 @@ def count_by_group(group_id):
     """
 
     return Contactor.objects.owner().filter(group_id=group_id).count()
+
+
+def get_list_by_ids(ids):
+    """
+    根据 id 数组查询
+    """
+
+    return Contactor.objects.owner().fields_in(id=ids)

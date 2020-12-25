@@ -121,7 +121,7 @@ def get_by_id(id):
     try:
         file = File.objects.owner().get(id=id)
     except ObjectDoesNotExist:
-        raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
+        raise PlatformError.error_args(ErrorCode.DATA_NOT_EXISTED, '文件', 'id')
     return file
 
 

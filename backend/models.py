@@ -1,4 +1,4 @@
-from django.core.validators import MaxLengthValidator
+from django.core.validators import MaxLengthValidator, MaxValueValidator
 from django.core.validators import MinLengthValidator
 from django.core.validators import MinValueValidator
 from django.core.validators import EmailValidator
@@ -311,16 +311,19 @@ class CaseInfo(BaseEntity):
     expected_keys = models.TextField(verbose_name='预期字段', blank=True, null=True)
     expected_values = models.TextField(verbose_name='预期值', blank=True, null=True)
     check_step = models.TextField(verbose_name='校验步骤', blank=True, null=True)
-    expected_http_status = models.IntegerField(verbose_name='Http 状态码', default=200,
+    expected_http_status = models.IntegerField(verbose_name='Http 状态码', blank=True, null=True, default=200,
                                                validators=[MinValueValidator(1, message='最小值为 1')])
     check_status = models.BooleanField(verbose_name='是否校验 Http 状态', default=False)
     run = models.BooleanField(verbose_name='是否运行', default=True)
     owner = models.IntegerField(verbose_name='拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
-    developer = models.IntegerField(verbose_name='接口开发者', default=0,
-                                    validators=[MinValueValidator(1, message='最小值为 1')])
+    developer = models.IntegerField(verbose_name='接口开发者', blank=True, null=True)
     notify = models.BooleanField(verbose_name='是否通知开发者', default=False)
     project_id = models.IntegerField(verbose_name='关联项目 id', validators=[MinValueValidator(1, message='最小值为 1')])
     sort = models.IntegerField(verbose_name='接口排序', default=0, validators=[MinValueValidator(1, message='最小值为 1')])
+    delay = models.IntegerField(verbose_name='延迟执行时长, 单位秒, 最长延时五分钟即 300', default=0,
+                                validators=[MinValueValidator(0, message='最小值为 0'),
+                                            MaxValueValidator(300, message='最大值为 300')])
+    sample = models.JSONField(verbose_name='结果示例，用于接口依赖时方便直接获得取值步骤', blank=True, null=True)
 
     class Meta:
         # 表名

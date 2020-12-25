@@ -69,7 +69,7 @@ def get_by_id(id):
     try:
         record = Record.objects.get(owner=UserHolder.current_user(), id=id)
     except ObjectDoesNotExist:
-        raise PlatformError.error(ErrorCode.DATA_NOT_EXISTED)
+        raise PlatformError.error_args(ErrorCode.DATA_NOT_EXISTED, '测试记录', 'id')
     return record
 
 
