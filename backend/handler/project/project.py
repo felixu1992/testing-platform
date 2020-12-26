@@ -114,12 +114,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
         """
 
         data = parse_data(request, 'POST')
-        params = get_params(data, 'id')
-        old_project = get_by_id(params['id'])
+        id, name = get_params(data, 'id', 'name').values()
+        old_project = get_by_id(id)
         new_project = Project()
         new_project.__dict__ = old_project.__dict__.copy()
         new_project.id = None
-        new_project.name = new_project.name + '_copy_' + str(random.randint(0, 99999))
+        new_project.name = name
         save(new_project)
         case_infos = case_info.list_by_project(old_project.id)
         new_infos = []
@@ -127,7 +127,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             new_case_info = CaseInfo()
             new_case_info.__dict__ = info.__dict__.copy()
             new_case_info.id = None
-            new_case_info.name = new_case_info.name + '_copy_' + str(random.randint(0, 99999))
+            new_case_info.project_id = new_project.id
             new_infos.append(new_case_info)
         if new_infos:
             batch_save(CaseInfo.objects, new_infos)
@@ -154,8 +154,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         ignored_num = [obj for obj in reports if getattr(obj, 'status') == IGNORED]
         passed_num = [obj for obj in reports if getattr(obj, 'status') == PASSED]
         failed_num = [obj for obj in reports if getattr(obj, 'status') == FAILED]
-        reco = record.create(group_id=project.group_id, project_id=project.id, remark='', owner=project.owner,
-                             total=len(case_infos), ignored=ignored_num, passed=passed_num, failed=failed_num)
+        reco = record.create(group_id=project.group_id, project_id=project.id, owner=project.owner,
+                             total=len(case_infos), ignored=len(ignored_num), passed=len(passed_num), failed=len(failed_num))
         for result in reports:
             result.record_id = reco.id
             report.create(result)

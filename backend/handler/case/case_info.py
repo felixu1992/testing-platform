@@ -26,6 +26,7 @@ class CaseInfoSerializer(serializers.ModelSerializer):
 
 
 class CaseInfoViewSet(viewsets.ModelViewSet):
+
     queryset = CaseInfo.objects
 
     serializer_class = CaseInfoSerializer
@@ -128,12 +129,12 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         """
 
         data = parse_data(request, 'POST')
-        params = get_params(data, 'id')
-        old_case_info = get_by_id(params['id'])
+        id, name = get_params(data, 'id', 'name').values()
+        old_case_info = get_by_id(id)
         new_case_info = CaseInfo()
         new_case_info.__dict__ = old_case_info.__dict__.copy()
         new_case_info.id = None
-        new_case_info.name = new_case_info.name + '_copy_' + str(random.randint(0, 99999))
+        new_case_info.name = name
         # 获取最大的 sort 值
         max_sort = CaseInfo.objects.owner().order_by('sort').values('sort').first()
         new_case_info.sort = int(max_sort['sort']) + 1
@@ -177,7 +178,6 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         params = get_params(data, 'id')
         case_info = get_by_id(params['id'])
         pro = project.get_by_id(case_info.project_id)
-        decoding(case_info)
         executor = Executor(case_infos=[case_info], project=pro)
         reports = executor.execute()
         return Response.def_success()

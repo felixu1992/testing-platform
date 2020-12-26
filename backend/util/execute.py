@@ -62,6 +62,11 @@ class Executor:
         self.project = project
         self.reports = []
         for case_info in case_infos:
+            try:
+                from backend.handler.case.case_info import decoding
+            except ImportError:
+                raise PlatformError.error(ErrorCode.FAIL)
+            decoding(case_info)
             report = Report()
             report.__dict__ = case_info.__dict__.copy()
             report.id = None

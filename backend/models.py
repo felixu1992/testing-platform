@@ -348,7 +348,7 @@ class Record(BaseEntity):
     id = models.AutoField(primary_key=True)
     group_id = models.IntegerField(verbose_name='分组 id', default=0, validators=[MinValueValidator(1, message='最小值为 1')])
     project_id = models.IntegerField(verbose_name='关联项目 id', validators=[MinValueValidator(1, message='最小值为 1')])
-    remark = models.CharField(verbose_name='记录描述', max_length=255, default=None,
+    remark = models.CharField(verbose_name='记录描述', max_length=255, default=None, blank=True, null=True,
                               validators=[MinLengthValidator(1, message='最小长度为 1'),
                                           MaxLengthValidator(255, message='最大长度为 255')])
     owner = models.IntegerField(verbose_name='拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
