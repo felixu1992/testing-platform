@@ -14,10 +14,10 @@ def get_value(source, steps):
     """
     根据入参字典以及取值步骤取出结果
 
-    取值步骤为 . 连接，如：data.records.0.name 含义为取 data 下 records 列表的第 0 条的 name 字段的值
+    steps 为取值步骤组成的列表
     """
     try:
-        # 循环取值步骤字典
+        # 循环取值步骤列表
         for step in steps:
             # 如果为数字则转为数字(数字代表从列表取值)，否则为字符
             step = step if not step.isdigit() else int(step)
@@ -109,6 +109,10 @@ class Executor:
             url, headers, params, files, result = request
         else:
             return
+        # 是否延时请求
+        delay = case_info.delay
+        if delay and delay > 0:
+            time.sleep(delay)
         # 请求开始时间
         start = time.time()
         # 请求
@@ -117,8 +121,6 @@ class Executor:
         time_used = int((time.time() - start) * 1000)
         # 校验结果
         self.__check_status(report, result, time_used)
-        # print 结果
-        # self.__print_result(report, url)
 
     def __build_request(self, case_info):
         """
@@ -229,9 +231,6 @@ class Executor:
                 response.status_code = 200
                 result.update({'message': '请求方法不支持，请检查用例'})
             result.update({'http_code': response.status_code})
-            # 请求非 200 不处理
-            # if response.status_code != 200:
-            #     result = {'code': '-1', 'message': '请求失败，请检查用例的请求路径、请求方法、请求参数是否正确'}
         except Exception:
             result.update({'message': '请求失败，请检查用例的请求路径、请求方法、请求参数是否正确'})
         return result
@@ -260,18 +259,17 @@ class Executor:
         # 定义预期和结果字典
         expected = {}
         response = {}
-        # 预期字段以 , 分割为预期字段的列表
+        # 预期字段
         expected_keys = report.expected_keys
-        # 预期结果以 , 分割为预期结果的列表
+        # 预期结果
         expected_values = report.expected_values
         # 循环预期字段的个数
         for key, p in zip(expected_keys, expected_values):
-            # 如果预期值直接给出，则 row_steps 长度为 1
             steps = p['steps']
+            # 是否存在接口依赖
             if 'depend' not in p:
                 # 将预期字段以及预期值放入预期字典
                 expected.update({key: p['value']})
-
             else:
                 # 取依赖的行数据
                 report = filter_obj_single(self.reports, 'case_id', int(p['depend']))
@@ -290,23 +288,9 @@ class Executor:
             report.status = PASSED
         else:
             report.status = FAILED
-        # result.pop('ignore')
         result.pop('http_code')
         # 填充结果到用例对象中
         report.response_content = json.dumps(result, ensure_ascii=False)
-
-    def __print_result(self, report, url):
-        """
-        打印请求结果
-        """
-
-        out = json.dumps({'用例名称': report.name, '用例描述': report.description, '请求方式': report.method, '请求路径': url,
-                          '请求结果': report.status}, indent=2, ensure_ascii=False)
-        if report.status == 'passed':
-            out = out.replace('passed', '\033[0;33;42m' + 'passed' + '\033[0m')
-        else:
-            out = out.replace('failed', '\033[0;37;41m' + 'failed' + '\033[0m')
-        LOGGER.info(out)
 
     def __parse_param(self, case_info):
         """
