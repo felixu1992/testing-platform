@@ -32,8 +32,8 @@ def page_to_dict(obj):
     return {
         'page': obj.number,
         'page_size': paginator.per_page,
-        'total_pages': paginator.num_pages,
-        'total_count': paginator.count,
+        'pages': paginator.num_pages,
+        'count': paginator.count,
         'records': list(obj.object_list)
     }
 
