@@ -90,6 +90,14 @@ class ContactorViewSet(viewsets.ModelViewSet):
                 contactor.group_name = group_name
         return Response.success(result)
 
+    def retrieve(self, request, *args, **kwargs):
+        """
+        根据 id 查询联系人详细信息
+        """
+
+        parse_data(request, 'GET')
+        return Response.success(get_by_id(kwargs['pk']))
+
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
 
