@@ -115,7 +115,7 @@ class User(BaseEntity):
         # 表名
         db_table = 'platform_user'
         # 排序
-        ordering = ['-created_at']
+        ordering = ['-updated_at']
 
 
 class ContactorGroup(BaseEntity):
@@ -133,7 +133,7 @@ class ContactorGroup(BaseEntity):
         # 表名
         db_table = 'platform_contactor_group'
         # 排序
-        ordering = ['-created_at']
+        ordering = ['-updated_at']
         # 唯一索引
         constraints = [
             models.UniqueConstraint(fields=['owner', 'name'], name='contactor_group_owner_name_idx')
@@ -164,7 +164,7 @@ class Contactor(BaseEntity):
         # 表名
         db_table = 'platform_contactor'
         # 排序
-        ordering = ['-created_at']
+        ordering = ['-updated_at']
         # 唯一索引
         constraints = [
             models.UniqueConstraint(fields=['owner', 'name'], name='contactor_owner_name_idx'),
@@ -192,7 +192,7 @@ class FileGroup(BaseEntity):
         # 表名
         db_table = 'platform_file_group'
         # 排序
-        ordering = ['-created_at']
+        ordering = ['-updated_at']
         # 唯一索引
         constraints = [
             models.UniqueConstraint(fields=['owner', 'name'], name='file_group_owner_name_idx')
@@ -220,7 +220,7 @@ class File(BaseEntity):
         # 表名
         db_table = 'platform_file'
         # 排序
-        ordering = ['-created_at']
+        ordering = ['-updated_at']
         # 唯一索引
         constraints = [
             models.UniqueConstraint(fields=['owner', 'name'], name='file_owner_name_idx')
@@ -246,7 +246,7 @@ class ProjectGroup(BaseEntity):
         # 表名
         db_table = 'platform_project_group'
         # 排序
-        ordering = ['-created_at']
+        ordering = ['-updated_at']
         # 唯一索引
         constraints = [
             models.UniqueConstraint(fields=['owner', 'name'], name='project_group_owner_name_idx')
@@ -274,7 +274,7 @@ class Project(BaseEntity):
         # 表名
         db_table = 'platform_project'
         # 排序
-        ordering = ['-created_at']
+        ordering = ['-updated_at']
         # 唯一索引
         constraints = [
             models.UniqueConstraint(fields=['owner', 'name'], name='project_owner_name_idx')
@@ -304,31 +304,34 @@ class CaseInfo(BaseEntity):
     path = models.CharField(verbose_name='请求地址', max_length=255,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
                                         MaxLengthValidator(255, message='最大长度为 255')])
-    params = models.JSONField(verbose_name='请求参数', blank=True, null=True)
-    extend_keys = models.TextField(verbose_name='扩展字段', blank=True, null=True)
-    extend_values = models.TextField(verbose_name='扩展值', blank=True, null=True)
     headers = models.JSONField(verbose_name='请求头', blank=True, null=True)
-    expected_keys = models.TextField(verbose_name='预期字段', blank=True, null=True)
-    expected_values = models.TextField(verbose_name='预期值', blank=True, null=True)
-    expected_http_status = models.IntegerField(verbose_name='Http 状态码', blank=True, null=True, default=200,
-                                               validators=[MinValueValidator(1, message='最小值为 1')])
-    check_status = models.BooleanField(verbose_name='是否校验 Http 状态', default=False)
     run = models.BooleanField(verbose_name='是否运行', default=True)
-    owner = models.IntegerField(verbose_name='拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
-    developer = models.IntegerField(verbose_name='接口开发者', blank=True, null=True)
-    notify = models.BooleanField(verbose_name='是否通知开发者', default=False)
+    check_status = models.BooleanField(verbose_name='是否校验 Http 状态', default=False)
     project_id = models.IntegerField(verbose_name='关联项目 id', validators=[MinValueValidator(1, message='最小值为 1')])
+    notify = models.BooleanField(verbose_name='是否通知开发者', default=False)
+    developer = models.IntegerField(verbose_name='接口开发者', blank=True, null=True)
     sort = models.IntegerField(verbose_name='接口排序', default=0, validators=[MinValueValidator(1, message='最小值为 1')])
     delay = models.IntegerField(verbose_name='延迟执行时长, 单位秒, 最长延时五分钟即 300', default=0,
                                 validators=[MinValueValidator(0, message='最小值为 0'),
                                             MaxValueValidator(300, message='最大值为 300')])
+    expected_http_status = models.IntegerField(verbose_name='Http 状态码', blank=True, null=True, default=200,
+                                               validators=[MinValueValidator(1, message='最小值为 1')])
+    owner = models.IntegerField(verbose_name='拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
+    params = models.JSONField(verbose_name='请求参数', blank=True, null=True)
     sample = models.JSONField(verbose_name='结果示例，用于接口依赖时方便直接获得取值步骤', blank=True, null=True)
+
+
+
+    extend_keys = models.TextField(verbose_name='扩展字段', blank=True, null=True)
+    extend_values = models.TextField(verbose_name='扩展值', blank=True, null=True)
+    expected_keys = models.TextField(verbose_name='预期字段', blank=True, null=True)
+    expected_values = models.TextField(verbose_name='预期值', blank=True, null=True)
 
     class Meta:
         # 表名
         db_table = 'platform_case_info'
         # 排序
-        ordering = ['sort', '-created_at']
+        ordering = ['sort', '-updated_at']
         # 唯一索引
         constraints = [
             models.UniqueConstraint(fields=['owner', 'project_id', 'sort'], name='case_owner_project_sort_idx'),
@@ -361,7 +364,7 @@ class Record(BaseEntity):
         # 表名
         db_table = 'platform_record'
         # 排序
-        ordering = ['-created_at']
+        ordering = ['-updated_at']
         # 普通索引
         indexes = [
             models.Index(fields=['owner', 'group_id'], name='record_owner_group_idx'),
@@ -421,7 +424,7 @@ class Report(BaseEntity):
         # 表名
         db_table = 'platform_report'
         # 排序
-        ordering = ['-created_at']
+        ordering = ['-updated_at']
         # 普通索引
         indexes = [
             models.Index(fields=['owner', 'record_id'], name='report_owner_record_idx')

@@ -38,6 +38,9 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
 
         body = parse_data(request, 'POST')
         case_info = CaseInfo(**body)
+        # 获取最大的 sort 值
+        max_sort = CaseInfo.objects.owner().order_by('sort').values('sort').first()
+        case_info.sort = int(max_sort['sort']) + 1
         # 参数校验
         check_params(case_info)
         encoding(case_info)

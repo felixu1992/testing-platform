@@ -155,3 +155,8 @@
 - 创建数据库`python manage.py makemigrations`
 - `python manage.py migrate`
 - `python manage.py runserver 0.0.0.0:port`
+## 需要调整的点
+- 排序规则      
+- 新增用例时，算出最大排序 + 1 作为新的排序      
+- 更新排序没实现     
+- 对用例新增和修改时，参数格式的校验
