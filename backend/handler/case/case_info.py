@@ -230,21 +230,21 @@ def deal_sort(source, target):
         max_sort = int(target)
     # 介于之间的数据
     case_infos = CaseInfo.objects.owner().gt(e=True, sort=min_sort).lt(e=True, sort=max_sort)
-    collection = [case for case in case_infos]
     flag = True
     _source = None
-    collection = sorted(collection, key=lambda o: o.sort, reverse=up)
-    for case in collection:
+    case_infos = sorted(case_infos, key=lambda o: o.sort, reverse=up) if up else case_infos
+    for case in case_infos:
         if flag and case.sort == source:
             case.sort = 999999999
             _source = case
             flag = False
+            save(_source)
         else:
             if up:
                 case.sort += 1
             else:
                 case.sort -= 1
-        save(case)
+    batch_update(CaseInfo.objects, case_infos, ['sort'])
     _source.sort = target
     save(_source)
 

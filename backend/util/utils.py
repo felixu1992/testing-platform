@@ -158,9 +158,9 @@ def batch_save(objects, objs):
     objects.bulk_create(objs)
 
 
-def batch_update(objects, objs):
+def batch_update(objects, objs, fields):
     """
     批量新增
     """
 
-    objects.bulk_update(objs)
+    objects.bulk_update(objs, fields=fields)
