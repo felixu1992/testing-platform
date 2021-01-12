@@ -1,6 +1,8 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
+from rest_framework.decorators import action
+from itertools import groupby
 from backend.exception import ErrorCode, PlatformError
 from backend.models import ContactorGroup
 from backend.util import Response, get_params, parse_data, page_params, update_fields, save
@@ -13,7 +15,6 @@ class ContactorGroupSerializer(serializers.ModelSerializer):
 
 
 class ContactorGroupViewSet(viewsets.ModelViewSet):
-
     queryset = ContactorGroup.objects
 
     serializer_class = ContactorGroupSerializer
@@ -71,6 +72,32 @@ class ContactorGroupViewSet(viewsets.ModelViewSet):
         groups = ContactorGroup.objects.owner().contains(name=name)
         page_group = Paginator(groups, page_size)
         result = page_group.page(page)
+        return Response.success(result)
+
+    @action(methods=['GET'], detail=False, url_path='tree')
+    def tree(self, request):
+        parse_data(request, 'GET')
+        groups = ContactorGroup.objects.owner().all()
+        try:
+            from backend.handler.contactor.contactor import get_list_by_groupIds
+        except ImportError:
+            raise PlatformError.error(ErrorCode.FAIL)
+        group_ids = [group.id for group in groups]
+        contactors = get_list_by_groupIds(group_ids)
+        contactor_map = {k: list(v) for k, v in groupby(contactors, lambda contactor: contactor.group_id)}
+        result = []
+        for group in groups:
+            result.append({
+                'title': group.name,
+                'value': group.id,
+                'key': group.id,
+                'children': list(map(lambda o: {
+                    'title': o.name,
+                    'value': o.id,
+                    'key': o.id,
+                    'children': []
+                }, contactor_map.get(group.id))) if contactor_map.get(group.id) else []
+            })
         return Response.success(result)
 
 

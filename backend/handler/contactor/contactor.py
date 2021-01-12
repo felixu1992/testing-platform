@@ -121,6 +121,14 @@ def count_by_group(group_id):
     return Contactor.objects.owner().filter(group_id=group_id).count()
 
 
+def get_list_by_groupIds(group_ids):
+    """
+    根据分组列表查询
+    """
+
+    return Contactor.objects.owner().fields_in(group_id=group_ids)
+
+
 def get_list_by_ids(ids):
     """
     根据 id 数组查询
