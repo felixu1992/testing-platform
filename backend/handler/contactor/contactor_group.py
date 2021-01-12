@@ -89,8 +89,9 @@ class ContactorGroupViewSet(viewsets.ModelViewSet):
         for group in groups:
             result.append({
                 'title': group.name,
-                'value': group.id,
-                'key': group.id,
+                'value': 'group' + str(group.id),
+                'key': 'group' + str(group.id),
+                'disabled': True,
                 'children': list(map(lambda o: {
                     'title': o.name,
                     'value': o.id,
