@@ -46,6 +46,24 @@ class PlatformQuerySet(QuerySet):
 
         return self.__update(operation='__in', **kwargs)
 
+    def lt(self, e=False, **kwargs):
+        """
+        小于 / 小于等于
+        """
+
+        if e:
+            return self.__update(operation='__lte', **kwargs)
+        return self.__update(operation='__lt', **kwargs)
+
+    def gt(self, e=False, **kwargs):
+        """
+        大于 / 大于等于
+        """
+
+        if e:
+            return self.__update(operation='__gte', **kwargs)
+        return self.__update(operation='__gt', **kwargs)
+
     def __update(self, operation, **kwargs):
         """
         对字典进行更新

@@ -1,5 +1,6 @@
 import json
 import random
+from enum import Enum
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
@@ -9,7 +10,8 @@ from backend.exception import ErrorCode, PlatformError
 from backend.handler.project import project
 from backend.handler.contactor import contactor
 from backend.models import CaseInfo
-from backend.util import UserHolder, Response, parse_data, page_params, get_params, update_fields, Executor, save
+from backend.util import UserHolder, Response, parse_data, page_params, get_params, update_fields, Executor, save, \
+    batch_update
 
 fields_cache = ['id', 'name', 'remark', 'method', 'host', 'path', 'params', 'extend_keys', 'extend_values',
                 'headers', 'expected_keys', 'expected_values', 'expected_http_status', 'check_status', 'run',
@@ -26,7 +28,6 @@ class CaseInfoSerializer(serializers.ModelSerializer):
 
 
 class CaseInfoViewSet(viewsets.ModelViewSet):
-
     queryset = CaseInfo.objects
 
     serializer_class = CaseInfoSerializer
@@ -185,8 +186,69 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         reports = executor.execute()
         return Response.def_success()
 
+    @action(methods=['PUT'], detail=False, url_path='sort')
+    def sort(self, request):
+        data = parse_data(request, 'PUT')
+        source, transfer = get_params(data, 'source', 'transfer').values()
+        get_by_sort(source)
+        target = None
+        if transfer == 'drag':
+            target = get_params(data, 'target')['target']
+            get_by_sort(target)
+        if transfer == 'up':
+            tar = CaseInfo.objects.owner().lt(source).last()
+            if tar is None:
+                return Response.def_success()
+            target = tar.sort
+        if transfer == 'down':
+            tar = CaseInfo.objects.owner().gt(source).first()
+            if tar is None:
+                return Response.def_success()
+            target = tar.sort
+        if transfer == 'top':
+            tar = CaseInfo.objects.owner().first()
+            if tar is None:
+                return Response.def_success()
+            target = tar.sort
+        if target is None:
+            return Response.def_success()
+        # 是否上移
+        if source == target:
+            return Response.def_success()
+        deal_sort(source, target)
+        return Response.def_success()
+
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
+def deal_sort(source, target):
+    up = source > target
+    if up:
+        min_sort = int(target)
+        max_sort = int(source)
+    else:
+        min_sort = int(source)
+        max_sort = int(target)
+    # 介于之间的数据
+    case_infos = CaseInfo.objects.owner().gt(e=True, sort=min_sort).lt(e=True, sort=max_sort)
+    collection = []
+    for cache in case_infos._result_cache:
+        collection.append(cache)
+    flag = True
+    _source = None
+    collection = sorted(collection, key=lambda o: o.sort, reverse=up)
+    for case in collection:
+        if flag and case.sort == source:
+            case.sort = 999999999
+            _source = case
+            flag = False
+        else:
+            if up:
+                case.sort += 1
+            else:
+                case.sort -= 1
+        save(case)
+    _source.sort = target
+    save(_source)
 
 def check_params(case_info):
     """
@@ -217,9 +279,20 @@ def check_params(case_info):
     # TODO 对注入参数、预期值等的数据格式做校验
 
 
+def get_by_sort(sort):
+    """
+    根据 sort 查询用例
+    """
+    try:
+        case_info = CaseInfo.objects.get(owner=UserHolder.current_user(), sort=sort)
+    except ObjectDoesNotExist:
+        raise PlatformError.error_args(ErrorCode.DATA_NOT_EXISTED, '用例', 'sort')
+    return case_info
+
+
 def get_by_id(id):
     """
-    根据 id 查询项目
+    根据 id 查询用例
     """
 
     try:
