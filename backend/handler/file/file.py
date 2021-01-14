@@ -94,6 +94,15 @@ class FileViewSet(viewsets.ModelViewSet):
                 file.group_name = group_name
         return Response.success(result)
 
+    def retrieve(self, request, *args, **kwargs):
+        """
+        根据 id 查询文件详细信息
+        """
+
+        parse_data(request, 'GET')
+        id = kwargs['pk']
+        return Response.success(get_by_id(id))
+
     @action(methods=['GET'], detail=True)
     def download(self, request, pk):
         """
