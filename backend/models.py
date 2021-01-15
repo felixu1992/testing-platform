@@ -338,8 +338,6 @@ class CaseInfo(BaseEntity):
     params = models.JSONField(verbose_name='请求参数', blank=True, null=True)
     sample = models.JSONField(verbose_name='结果示例，用于接口依赖时方便直接获得取值步骤', blank=True, null=True)
 
-
-
     extend_keys = models.TextField(verbose_name='扩展字段', blank=True, null=True)
     extend_values = models.TextField(verbose_name='扩展值', blank=True, null=True)
     expected_keys = models.TextField(verbose_name='预期字段', blank=True, null=True)
@@ -428,7 +426,7 @@ class Report(BaseEntity):
                                             MaxValueValidator(300, message='最大值为 300')])
     sample = models.JSONField(verbose_name='结果示例，用于接口依赖时方便直接获得取值步骤', blank=True, null=True)
     case_id = models.IntegerField(verbose_name='等同于用例 id', default=0,
-                             validators=[MinValueValidator(1, message='最小值为 1')])
+                                  validators=[MinValueValidator(1, message='最小值为 1')])
     response_code = models.CharField(verbose_name='响应状态', max_length=8, blank=True, null=True,
                                      validators=[MinLengthValidator(1, message='最小长度为 1'),
                                                  MaxLengthValidator(8, message='最大长度为 8')])
@@ -437,6 +435,9 @@ class Report(BaseEntity):
     response_content = models.TextField(verbose_name='响应状态', blank=True, null=True)
     time_used = models.IntegerField(verbose_name='请求耗时', default=0)
     record_id = models.IntegerField(verbose_name='记录 id', validators=[MinValueValidator(1, message='最小值为 1')])
+    status = models.CharField(verbose_name='用例执行结果', max_length=8, default='FAILED',
+                              validators=[MinLengthValidator(1, message='最小长度为 1'),
+                                          MaxLengthValidator(8, message='最大长度为 8')])
 
     class Meta:
         # 表名

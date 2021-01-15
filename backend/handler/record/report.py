@@ -1,3 +1,5 @@
+import json
+
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
@@ -19,8 +21,7 @@ class ReportViewSet(viewsets.ModelViewSet):
 
     serializer_class = ReportSerializer
 
-    @action(methods=['GET'], detail=False, url_path='page')
-    def page(self, request):
+    def list(self, request, *args, **kwargs):
         """
         分页查询项目
 
@@ -30,19 +31,23 @@ class ReportViewSet(viewsets.ModelViewSet):
         """
 
         data = parse_data(request, 'GET')
-        page, page_size, name, group_id = page_params(data, 'name', 'group_id').values()
-        projects = Report.objects.filter(owner=UserHolder.current_user()).exact(group_id=group_id).contains(name=name)
+        page, page_size, name, record_id = page_params(data, 'name', 'record_id').values()
+        if record_id is None:
+            raise PlatformError.error_args(ErrorCode.MISSING_NECESSARY_KEY, 'record_id')
+        projects = Report.objects.filter(owner=UserHolder.current_user()).exact(record_id=record_id).contains(name=name)
         page_projects = Paginator(projects, page_size)
-        page_projects.page(page)
-        return Response.success(projects)
+        result = page_projects.page(page)
+        return Response.success(result)
 
-    def get(self, request, id):
+    def retrieve(self, request, *args, **kwargs):
         """
         根据 id 查询项目详细信息
         """
 
         parse_data(request, 'GET')
-        return Response.success(get_by_id(id))
+        report = get_by_id(kwargs['pk'])
+        decoding(report)
+        return Response.success(report)
 
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
@@ -66,3 +71,18 @@ def create(report):
 
     save(report)
     return report
+
+
+def decoding(report):
+    """
+    对部分参数进行解码操作
+    """
+
+    if report.extend_keys:
+        report.extend_keys = json.loads(report.extend_keys)
+    if report.extend_values:
+        report.extend_values = json.loads(report.extend_values)
+    if report.expected_keys:
+        report.expected_keys = json.loads(report.expected_keys)
+    if report.expected_values:
+        report.expected_values = json.loads(report.expected_values)

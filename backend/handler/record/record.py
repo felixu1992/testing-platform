@@ -16,11 +16,12 @@ class RecordSerializer(serializers.ModelSerializer):
 
 
 class RecordViewSet(viewsets.ModelViewSet):
+
     queryset = Record
 
     serializer_class = RecordSerializer
 
-    def delete(self, request, id):
+    def destroy(self, request, *args, **kwargs):
         """
         根据 id 删除记录
 
@@ -30,13 +31,13 @@ class RecordViewSet(viewsets.ModelViewSet):
         """
 
         parse_data(request, 'DELETE')
+        id = kwargs['pk']
         record = get_by_id(id)
         record.delete()
         # TODO 删用例结果
         return Response.def_success()
 
-    @action(methods=['GET'], detail=False, url_path='page')
-    def page(self, request):
+    def list(self, request, *args, **kwargs):
         """
         分页查询记录
 
@@ -50,8 +51,8 @@ class RecordViewSet(viewsets.ModelViewSet):
         records = Record.objects.filter(owner=UserHolder.current_user()).exact(group_id=group_id).exact(
             project_id=project_id)
         page_projects = Paginator(records, page_size)
-        page_projects.page(page)
-        return Response.success(records)
+        result = page_projects.page(page)
+        return Response.success(result)
 
     @action(methods=['GET'], detail=False, url_path='export')
     def export(self, request, id):

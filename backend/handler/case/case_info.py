@@ -4,6 +4,7 @@ from enum import Enum
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
+from django.db import transaction
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 from backend.exception import ErrorCode, PlatformError
@@ -12,6 +13,7 @@ from backend.handler.contactor import contactor
 from backend.models import CaseInfo
 from backend.util import UserHolder, Response, parse_data, page_params, get_params, update_fields, Executor, save, \
     batch_update
+from backend.util.resp_data import obj_to_dict
 
 fields_cache = ['id', 'name', 'remark', 'method', 'host', 'path', 'params', 'extend_keys', 'extend_values',
                 'headers', 'expected_keys', 'expected_values', 'expected_http_status', 'check_status', 'run',
@@ -184,7 +186,16 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         pro = project.get_by_id(case_info.project_id)
         executor = Executor(case_infos=[case_info], project=pro)
         reports = executor.execute()
-        return Response.def_success()
+        result = {}
+        properties = reports[0].__dict__
+        for k, v in properties.items():
+            if k in result.keys() or k.startswith('_'):
+                continue
+            if k == 'owner':
+                continue
+            result[k] = v
+        return Response.success(result)
+
 
     @action(methods=['PUT'], detail=False, url_path='sort')
     def sort(self, request):
@@ -220,6 +231,7 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
 
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
+@transaction.atomic
 def deal_sort(source, target):
     up = source > target
     if up:
