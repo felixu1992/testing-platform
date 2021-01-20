@@ -1,10 +1,11 @@
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 
-from backend.exception import ErrorCode, PlatformError, ValidateError
+from backend.exception import ErrorCode, PlatformError
 from backend.models import Record
+from backend.handler.project import project, project_group
 from backend.util import UserHolder, Response, parse_data, page_params, save
 
 
@@ -16,7 +17,6 @@ class RecordSerializer(serializers.ModelSerializer):
 
 
 class RecordViewSet(viewsets.ModelViewSet):
-
     queryset = Record
 
     serializer_class = RecordSerializer
@@ -47,11 +47,19 @@ class RecordViewSet(viewsets.ModelViewSet):
         """
 
         data = parse_data(request, 'GET')
-        page, page_size, group_id, project_id = page_params(data, 'name', 'group_id').values()
-        records = Record.objects.filter(owner=UserHolder.current_user()).exact(group_id=group_id).exact(
-            project_id=project_id)
+        page, page_size, name, group_id, project_name = page_params(data, 'name', 'group_id', 'project_name').values()
+        records = Record.objects.filter(owner=UserHolder.current_user()).exact(group_id=group_id)
         page_projects = Paginator(records, page_size)
         result = page_projects.page(page)
+        group_ids = [o.group_id for o in result.object_list]
+        groups = project_group.get_list_by_ids(group_ids)
+        group_names = {o.id: o.name for o in groups}
+        project_ids = [o.project_id for o in result.object_list]
+        projects = project.get_list_by_ids(project_ids)
+        project_names = {o.id: o.name for o in projects}
+        for record in result.object_list:
+            record.group_name = group_names[record.group_id]
+            record.project_name = project_names[record.project_id]
         return Response.success(result)
 
     @action(methods=['GET'], detail=False, url_path='export')

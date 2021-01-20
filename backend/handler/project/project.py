@@ -9,7 +9,8 @@ from backend.handler.case import case_info
 from backend.handler.project import project_group
 from backend.handler.record import report, record
 from backend.models import Project, CaseInfo
-from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params, Executor, save, batch_save
+from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params, Executor, save, \
+    batch_save
 from backend.settings import IGNORED, FAILED, PASSED
 
 
@@ -20,7 +21,6 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
-
     queryset = Project.objects
 
     serializer_class = ProjectSerializer
@@ -155,7 +155,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         passed_num = [obj for obj in reports if getattr(obj, 'status') == PASSED]
         failed_num = [obj for obj in reports if getattr(obj, 'status') == FAILED]
         reco = record.create(group_id=project.group_id, project_id=project.id, owner=project.owner,
-                             total=len(case_infos), ignored=len(ignored_num), passed=len(passed_num), failed=len(failed_num))
+                             total=len(case_infos), ignored=len(ignored_num), passed=len(passed_num),
+                             failed=len(failed_num))
         for result in reports:
             result.record_id = reco.id
             report.create(result)
@@ -174,6 +175,14 @@ def get_by_id(id):
     except ObjectDoesNotExist:
         raise PlatformError.error_args(ErrorCode.DATA_NOT_EXISTED, '项目', 'id')
     return project
+
+
+def get_list_by_ids(ids):
+    """
+    根据 id 数组查询
+    """
+
+    return Project.objects.owner().fields_in(id=ids)
 
 
 def count_by_group(group_id):
