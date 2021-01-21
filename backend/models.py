@@ -350,7 +350,6 @@ class CaseInfo(BaseEntity):
         ordering = ['sort', '-updated_at']
         # 唯一索引
         constraints = [
-            models.UniqueConstraint(fields=['owner', 'project_id', 'sort'], name='case_owner_project_sort_idx'),
             models.UniqueConstraint(fields=['owner', 'project_id', 'name'], name='case_owner_project_name_idx')
         ]
         # 普通索引

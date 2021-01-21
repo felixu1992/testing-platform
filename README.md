@@ -153,7 +153,7 @@
 - `pip freeze > install.txt` 导出所有依赖     
 - `pip install -r install.txt` 安装所有依赖
 - 创建数据库`python manage.py makemigrations`
-- `python manage.py migrate`
+- `python manage.py makemigrations`
 - `python manage.py runserver 0.0.0.0:port`
 ## 需要调整的点
 - 排序规则      

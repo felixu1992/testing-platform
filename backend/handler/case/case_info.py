@@ -196,7 +196,6 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
             result[k] = v
         return Response.success(result)
 
-
     @action(methods=['PUT'], detail=False, url_path='sort')
     def sort(self, request):
         data = parse_data(request, 'PUT')
@@ -246,19 +245,15 @@ def deal_sort(source, target):
     _source = None
     case_infos = sorted(case_infos, key=lambda o: o.sort, reverse=up) if up else case_infos
     for case in case_infos:
-        if flag and case.sort == source:
-            case.sort = 999999999
-            _source = case
-            flag = False
-            save(_source)
+        if case.sort == source:
+            case.sort = target
         else:
             if up:
                 case.sort += 1
             else:
                 case.sort -= 1
     batch_update(CaseInfo.objects, case_infos, ['sort'])
-    _source.sort = target
-    save(_source)
+
 
 def check_params(case_info):
     """
