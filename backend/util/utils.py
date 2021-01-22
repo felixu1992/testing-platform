@@ -74,11 +74,11 @@ def get_params(data, *args, toleration=True):
         except KeyError:
             # 字典中不存在，容忍则追加 None
             if toleration:
-                LOGGER.info('参数获取失败，填充为 None，data={}，中不包含 {}', data, param)
+                # LOGGER.info('参数获取失败，填充为 None，data={}，中不包含 {}', data, param)
                 result.update({param: None})
             # 不容忍则报错
             else:
-                LOGGER.error('参数获取失败，data={}，中不包含 {}', data, param)
+                # LOGGER.error('参数获取失败，data={}，中不包含 {}', data, param)
                 raise PlatformError.error_args(ErrorCode.MISSING_NECESSARY_KEY, param)
     return result
 
@@ -108,7 +108,7 @@ def page_params(data, *args):
     return result
 
 
-def update_fields(obj, always=False, **kwargs):
+def update_fields(obj, always=True, **kwargs):
     """
     更新对象中的属性
 

@@ -195,7 +195,7 @@ class Executor:
             result.update({'message': 'host 不能为空'})
             case_info.response_content = '请求路径缺失，接口未执行'
             return None
-        if case_info.host is None:
+        if not case_info.host:
             case_info.host = self.project.host
         self.__parse_path(case_info)
         url = case_info.host + case_info.path
@@ -265,9 +265,10 @@ class Executor:
         expected_values = report.expected_values
         # 循环预期字段的个数
         for key, p in zip(expected_keys, expected_values):
-            steps = p['steps']
+            key = key[0]
+            steps = [ste['value'] for ste in p['steps']]
             # 是否存在接口依赖
-            if 'depend' not in p:
+            if 'depend' not in p or not isinstance(p['depend'], int):
                 # 将预期字段以及预期值放入预期字典
                 expected.update({key: p['value']})
             else:
@@ -301,7 +302,7 @@ class Executor:
 
         # 获取当前用例的 params
         params = case_info.params
-        params = {} if params is None else json.loads(params)
+        params = {} if params is None else params
         # 取当前用例的 extend_keys
         extend_keys = case_info.extend_keys
         # 如果有需要处理的占位符

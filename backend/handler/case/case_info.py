@@ -142,7 +142,7 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         new_case_info.id = None
         new_case_info.name = name
         # 获取最大的 sort 值
-        max_sort = CaseInfo.objects.owner().order_by('sort').values('sort').first()
+        max_sort = CaseInfo.objects.owner().order_by('-sort').values('sort').first()
         new_case_info.sort = int(max_sort['sort']) + 1
         save(new_case_info)
         return Response.success(new_case_info)
