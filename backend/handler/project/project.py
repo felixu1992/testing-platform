@@ -8,10 +8,11 @@ from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.handler.case import case_info
 from backend.handler.project import project_group
 from backend.handler.record import report, record
-from backend.models import Project, CaseInfo
+from backend.models import Project, CaseInfo, Report
 from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params, Executor, save, \
     batch_save
 from backend.settings import IGNORED, FAILED, PASSED
+from backend.util.resp_data import obj_to_dict
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -159,7 +160,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
                              failed=len(failed_num))
         for result in reports:
             result.record_id = reco.id
-            report.create(result)
+            result.owner = reco.owner
+        batch_save(Report.objects, [Report(**obj_to_dict(report)) for report in reports])
         return Response.success(reco)
 
 

@@ -17,7 +17,7 @@ from backend.util.resp_data import obj_to_dict
 
 fields_cache = ['id', 'name', 'remark', 'method', 'host', 'path', 'params', 'extend_keys', 'extend_values',
                 'headers', 'expected_keys', 'expected_values', 'expected_http_status', 'check_status', 'run',
-                'developer', 'notify', 'sort', 'delay', 'sample']
+                'developer', 'sort', 'delay', 'sample']
 
 
 class CaseInfoSerializer(serializers.ModelSerializer):

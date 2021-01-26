@@ -416,7 +416,6 @@ class Report(BaseEntity):
     run = models.BooleanField(verbose_name='是否运行', default=True)
     owner = models.IntegerField(verbose_name='拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
     developer = models.IntegerField(verbose_name='接口开发者', blank=True, null=True)
-    notify = models.BooleanField(verbose_name='是否通知开发者', default=False)
     project_id = models.IntegerField(verbose_name='关联项目 id', validators=[MinValueValidator(1, message='最小值为 1')])
     sort = models.IntegerField(verbose_name='接口排序', default=0, validators=[MinValueValidator(1, message='最小值为 1')])
     delay = models.IntegerField(verbose_name='延迟执行时长, 单位秒, 最长延时五分钟即 300', default=0,
@@ -441,7 +440,7 @@ class Report(BaseEntity):
         # 表名
         db_table = 'platform_report'
         # 排序
-        ordering = ['-updated_at']
+        ordering = ['sort', '-updated_at']
         # 普通索引
         indexes = [
             models.Index(fields=['owner', 'record_id'], name='report_owner_record_idx')
