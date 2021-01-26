@@ -326,7 +326,6 @@ class CaseInfo(BaseEntity):
     run = models.BooleanField(verbose_name='是否运行', default=True)
     check_status = models.BooleanField(verbose_name='是否校验 Http 状态', default=False)
     project_id = models.IntegerField(verbose_name='关联项目 id', validators=[MinValueValidator(1, message='最小值为 1')])
-    notify = models.BooleanField(verbose_name='是否通知开发者', default=False)
     developer = models.IntegerField(verbose_name='接口开发者', blank=True, null=True)
     sort = models.IntegerField(verbose_name='接口排序', default=0, validators=[MinValueValidator(1, message='最小值为 1')])
     delay = models.IntegerField(verbose_name='延迟执行时长, 单位秒, 最长延时五分钟即 300', default=0,

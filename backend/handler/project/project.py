@@ -60,7 +60,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         """
 
         data = parse_data(request, 'PUT')
-        params = get_params(data, 'id', 'name', 'remark', 'headers', 'host', toleration=True)
+        params = get_params(data, 'id', 'name', 'remark', 'headers', 'host', 'notify', 'group_id', toleration=True)
         project = get_by_id(params['id'])
         update_fields(project, **params)
         # 校验分组是否存在
