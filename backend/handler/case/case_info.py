@@ -343,3 +343,14 @@ def decoding(case_info):
         case_info.expected_keys = json.loads(case_info.expected_keys)
     if case_info.expected_values:
         case_info.expected_values = json.loads(case_info.expected_values)
+
+
+# -------------------------------------------- 临时 -----------------------------------------
+def create_case(case):
+    # 获取最大的 sort 值
+    max_sort = CaseInfo.objects.owner().order_by('-sort').values('sort').first()
+    case.sort = int(max_sort['sort']) + 1
+    # 参数校验
+    check_params(case)
+    encoding(case)
+    save(case)

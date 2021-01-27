@@ -347,10 +347,6 @@ class CaseInfo(BaseEntity):
         db_table = 'platform_case_info'
         # 排序
         ordering = ['sort', '-updated_at']
-        # 唯一索引
-        constraints = [
-            models.UniqueConstraint(fields=['owner', 'project_id', 'name'], name='case_owner_project_name_idx')
-        ]
         # 普通索引
         indexes = [
             models.Index(fields=['owner', 'project_id', 'developer'], name='project_owner_developer_idx')

@@ -6,7 +6,6 @@ from requests import Response
 from backend.models import Report
 from backend.util import filter_obj_single, PlatformError, ErrorCode
 from backend.handler import file
-from backend import CONTENT_TYPE, APPLICATION_JSON, FORM_DATA, LOGGER
 from backend.settings import *
 
 
@@ -101,6 +100,10 @@ class Executor:
         # 不执行的用例直接返回
         if not case_info.run:
             report.status = IGNORED
+            report.time_used = 0
+            report.response_content = {}
+            report.http_status = 0
+            report.response_code = 0
             return
 
         # 构建请求参数
