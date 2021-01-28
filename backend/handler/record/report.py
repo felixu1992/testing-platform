@@ -31,10 +31,11 @@ class ReportViewSet(viewsets.ModelViewSet):
         """
 
         data = parse_data(request, 'GET')
-        page, page_size, name, record_id = page_params(data, 'name', 'record_id').values()
+        page, page_size, name, record_id, status = page_params(data, 'name', 'record_id', 'status').values()
         if record_id is None:
             raise PlatformError.error_args(ErrorCode.MISSING_NECESSARY_KEY, 'record_id')
-        projects = Report.objects.filter(owner=UserHolder.current_user()).exact(record_id=record_id).contains(name=name)
+        projects = Report.objects.filter(owner=UserHolder.current_user()).exact(record_id=record_id)\
+            .contains(name=name).exact(status=status)
         page_projects = Paginator(projects, page_size)
         result = page_projects.page(page)
         return Response.success(result)

@@ -142,6 +142,14 @@ def count_by_group(group_id):
     return File.objects.owner().filter(group_id=group_id).count()
 
 
+def get_list_by_groupIds(group_ids):
+    """
+    根据分组列表查询
+    """
+
+    return File.objects.owner().fields_in(group_id=group_ids)
+
+
 def _file_data(request, toleration=False):
     # 获得所有文件
     files = request.FILES.getlist('files')

@@ -207,7 +207,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 info.check_status = False
                 info.delay = 0
                 info.params = json.loads(case.params) if case.params else None
-                info.sample = json.loads(case.response_content) if case.response_content and len(case.response_content) < 30000 else None
+                info.sample = json.loads(case.response_content) if case.response_content and len(case.response_content) < 30000 and case.response_content != 'None' else None
                 info.project_id = project.id
                 build_extend(info, case.ex_keys, case.ex_values, cases)
                 build_expected(info, case.expected_key, case.expected_value, case.check_step)

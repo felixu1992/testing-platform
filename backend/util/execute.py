@@ -5,7 +5,7 @@ import requests
 from requests import Response
 from backend.models import Report
 from backend.util import filter_obj_single, PlatformError, ErrorCode
-from backend.handler import file
+from backend.handler.file import file
 from backend.settings import *
 
 
@@ -20,6 +20,9 @@ def get_value(source, steps):
         for step in steps:
             # 如果为数字则转为数字(数字代表从列表取值)，否则为字符
             step = step if not step.isdigit() else int(step)
+            # 如果 step 是数字，则是从 list 中取值
+            if isinstance(step, int) and isinstance(source, list) and len(source) < 1:
+                return None
             # 从结果字典取值
             source = source[step]
     # 出现异常直接填充为空字符
@@ -152,9 +155,9 @@ class Executor:
         headers = {}
         # 父级 header
         if self.project and self.project.headers:
-            headers.update(json.loads(self.project.headers))
+            headers.update(self.project.headers)
         if case_info.headers:
-            headers.update(json.loads(case_info.headers))
+            headers.update(case_info.headers)
         return headers
 
     def __build_params(self, case_info, headers):
@@ -164,7 +167,7 @@ class Executor:
         # 定义一个字典，在文件上传时使用
         files = {}
         if case_info.headers:
-            headers.update(case_info)
+            headers.update(case_info.headers)
         # 请求头没有 Content-Type 默认 json
         if CONTENT_TYPE not in headers or headers[CONTENT_TYPE] == APPLICATION_JSON:
             # 设置为 json
@@ -282,7 +285,7 @@ class Executor:
                     report.status = FAILED
                     return
                 # 否则按照依赖步骤取出依赖值，填充预期字典
-                content = json.loads(report.response_content)
+                content = report.response_content
                 expected.update({key: get_value(content, steps)})
 
             # 将预期字段对应的结果从结果中取出(由于这种情况)
@@ -294,7 +297,7 @@ class Executor:
             report.status = FAILED
         result.pop('http_code')
         # 填充结果到用例对象中
-        report.response_content = json.dumps(result, ensure_ascii=False)
+        report.response_content = result
 
     def __parse_param(self, case_info):
         """
@@ -370,10 +373,7 @@ class Executor:
         # 否则取出依赖行数据中的请求响应结果
         content = report.response_content
         # 有值转为字典
-        if content:
-            content = json.loads(content)
-        # 无值直接返回 None
-        else:
+        if not content:
             return None
         # 以给定对象和取值步骤去取出对应数据
         return get_value(content, steps)

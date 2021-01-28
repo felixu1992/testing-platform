@@ -425,7 +425,7 @@ class Report(BaseEntity):
                                                  MaxLengthValidator(8, message='最大长度为 8')])
     http_status = models.IntegerField(verbose_name='Http 状态码', default=200,
                                       validators=[MinValueValidator(1, message='最小值为 1')])
-    response_content = models.TextField(verbose_name='响应状态', blank=True, null=True)
+    response_content = models.JSONField(verbose_name='响应状态', blank=True, null=True)
     time_used = models.IntegerField(verbose_name='请求耗时', default=0)
     record_id = models.IntegerField(verbose_name='记录 id', validators=[MinValueValidator(1, message='最小值为 1')])
     status = models.CharField(verbose_name='用例执行结果', max_length=8, default='FAILED',

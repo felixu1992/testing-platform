@@ -1,3 +1,5 @@
+from itertools import groupby
+
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
@@ -73,6 +75,33 @@ class FileGroupViewSet(viewsets.ModelViewSet):
         groups = FileGroup.objects.owner().contains(name=name)
         page_group = Paginator(groups, page_size)
         result = page_group.page(page)
+        return Response.success(result)
+
+    @action(methods=['GET'], detail=False, url_path='tree')
+    def tree(self, request):
+        parse_data(request, 'GET')
+        groups = FileGroup.objects.owner().all()
+        try:
+            from backend.handler.file.file import get_list_by_groupIds
+        except ImportError:
+            raise PlatformError.error(ErrorCode.FAIL)
+        group_ids = [group.id for group in groups]
+        files = get_list_by_groupIds(group_ids)
+        file_map = {k: list(v) for k, v in groupby(files, lambda file: file.group_id)}
+        result = []
+        for group in groups:
+            result.append({
+                'title': group.name,
+                'value': 'group' + str(group.id),
+                'key': 'group' + str(group.id),
+                'disabled': True,
+                'children': list(map(lambda o: {
+                    'title': o.name,
+                    'value': o.id,
+                    'key': o.id,
+                    'children': []
+                }, file_map.get(group.id))) if file_map.get(group.id) else []
+            })
         return Response.success(result)
 
 
