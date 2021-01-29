@@ -151,7 +151,7 @@ class ContactorGroup(BaseEntity):
         # 表名
         db_table = 'platform_contactor_group'
         # 排序
-        ordering = ['-updated_at']
+        ordering = ['created_at']
         # 唯一索引
         constraints = [
             models.UniqueConstraint(fields=['owner', 'name'], name='contactor_group_owner_name_idx')
