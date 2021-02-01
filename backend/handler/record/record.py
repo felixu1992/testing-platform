@@ -82,6 +82,14 @@ def get_by_id(id):
     return record
 
 
+def count():
+    """
+    查询记录总数
+    """
+
+    return Record.objects.owner().count()
+
+
 def create(**kwargs):
     """
     创建测试记录

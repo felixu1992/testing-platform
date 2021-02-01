@@ -219,6 +219,21 @@ class ProjectViewSet(viewsets.ModelViewSet):
             os.remove(file_path)
         return Response.def_success()
 
+    @action(methods=['GET'], detail=False, url_path='statistics')
+    def statistics(self, request):
+        """
+        首页的统计数据
+        """
+
+        # 查询所有项目
+        # 查询所有接口
+        # 查询所有记录
+
+        return Response.success({'project': Project.objects.owner().count(),
+                                 'case': case_info.count(),
+                                 'record': record.count()})
+
+
 
 def build_extend(info, ex_keys, ex_values, cases):
     if not ex_keys:

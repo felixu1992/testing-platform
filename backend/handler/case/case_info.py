@@ -307,6 +307,14 @@ def get_by_id(id):
     return case_info
 
 
+def count():
+    """
+    查询用例总数
+    """
+
+    return CaseInfo.objects.owner().count()
+
+
 def list_by_project(project_id):
     """
     根据项目分页查询接口列表
