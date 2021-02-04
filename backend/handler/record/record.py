@@ -2,7 +2,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
-
 from backend.exception import ErrorCode, PlatformError
 from backend.models import Record
 from backend.handler.project import project, project_group

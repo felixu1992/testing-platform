@@ -271,7 +271,7 @@ def build_expected(info, ex_keys, ex_values, check_steps):
         value = values[i]
         steps = [{'value': step} for step in _steps[i].split('.')]
         expected_values.append({
-            'depend': '--请选择--',
+            'depend': None,
             'steps': steps,
             'value': value
         })
