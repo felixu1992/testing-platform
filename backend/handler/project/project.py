@@ -166,6 +166,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
                              failed=len(failed_num))
         for result in reports:
             result.record_id = reco.id
+            case_info.encoding(result)
             result.owner = reco.owner
         batch_save(Report.objects, [Report(**obj_to_dict(report)) for report in reports])
         return Response.success(reco)
@@ -207,7 +208,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 info.check_status = False
                 info.delay = 0
                 info.params = json.loads(case.params) if case.params else None
-                info.sample = json.loads(case.response_content) if case.response_content and len(case.response_content) < 30000 and case.response_content != 'None' else None
+                info.sample = json.loads(case.response_content) if case.response_content and len(
+                    case.response_content) < 30000 and case.response_content != 'None' else None
                 info.project_id = project.id
                 build_extend(info, case.ex_keys, case.ex_values, cases)
                 build_expected(info, case.expected_key, case.expected_value, case.check_step)
@@ -232,7 +234,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response.success({'project': Project.objects.owner().count(),
                                  'case': case_info.count(),
                                  'record': record.count()})
-
 
 
 def build_extend(info, ex_keys, ex_values, cases):
@@ -276,7 +277,6 @@ def build_expected(info, ex_keys, ex_values, check_steps):
         })
     info.expected_keys = expected_keys
     info.expected_values = expected_values
-
 
 
 class ExcelParser:

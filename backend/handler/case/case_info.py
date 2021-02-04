@@ -1,19 +1,15 @@
 import json
-import random
-from enum import Enum
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.db import transaction
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 from backend.exception import ErrorCode, PlatformError
-from backend.handler.project import project
 from backend.handler.contactor import contactor
+from backend.handler.project import project
 from backend.models import CaseInfo
 from backend.util import UserHolder, Response, parse_data, page_params, get_params, update_fields, Executor, save, \
     batch_update
-from backend.util.resp_data import obj_to_dict
 
 fields_cache = ['id', 'name', 'remark', 'method', 'host', 'path', 'params', 'extend_keys', 'extend_values',
                 'headers', 'expected_keys', 'expected_values', 'expected_http_status', 'check_status', 'run',
