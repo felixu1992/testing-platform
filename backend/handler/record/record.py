@@ -3,7 +3,7 @@ from django.core.paginator import Paginator
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 from backend.exception import ErrorCode, PlatformError
-from backend.models import Record
+from backend.models import Record, Report
 from backend.handler.project import project, project_group
 from backend.util import UserHolder, Response, parse_data, page_params, save
 
@@ -33,7 +33,8 @@ class RecordViewSet(viewsets.ModelViewSet):
         id = kwargs['pk']
         record = get_by_id(id)
         record.delete()
-        # TODO 删用例结果
+        # 删除用例执行结果
+        Report.objects.owner().filter(record_id=id).delete()
         return Response.def_success()
 
     def list(self, request, *args, **kwargs):
