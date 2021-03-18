@@ -32,6 +32,7 @@ def get_value(source, steps):
 
 
 def set_value(value, target, steps):
+    copy = target
     # 循环找到对应位置插入
     for i in range(0, len(steps)):
         step = steps[i]
@@ -39,16 +40,50 @@ def set_value(value, target, steps):
         step = step if not step.isdigit() else int(step)
         # 取到最后了，直接将值插入该位置
         if i == len(steps) - 1:
-            target[step] = value
+            # 最后一位是数字，认为是数组
+            if isinstance(step, int):
+                # 目标数组存在
+                if isinstance(target, list):
+                    # 指定索引不存在
+                    if len(target) - 1 < step:
+                        __fill_arr(target, step, value)
+                    # 指定索引存在，替换索引位置的值
+                    else:
+                        target[step] = value
+                # 目标数组不存在
+                else:
+                    # 创建空数组
+                    target = []
+                    __fill_arr(target, step, value)
+                    steps.pop()
+                    set_value(target, copy, steps)
+            else:
+                target[step] = value
         # 否则继续往下找插入位置
         else:
             try:
                 # 从目标中取当前 key 对应的值为下一次的目标
                 target = target[step]
             except KeyError:
-                # 报错则下一次目标为空字典
-                target.update({step: {}})
+                # 报错则处理下一次可能的情况
+                if isinstance(step, int):
+                    target = []
+                    for j in range(step):
+                        target.append({})
+                else:
+                    target.update({step: {}})
                 target = target[step]
+
+
+def __fill_arr(arr, index, value):
+    # 从最大索引填充到指定索引
+    for i in range(len(arr), index + 1):
+        # 指定索引填充指定值
+        if i is index:
+            arr.append(value)
+        # 非指定索引填充空
+        else:
+            arr.append(None)
 
 
 class Process:
