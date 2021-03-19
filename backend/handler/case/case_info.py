@@ -303,6 +303,14 @@ def get_by_id(id):
     return case_info
 
 
+def delete_by_project(project_id):
+    """
+    根据项目批量删除
+    """
+
+    CaseInfo.objects.owner().filter(project_id=project_id).delete()
+
+
 def count():
     """
     查询用例总数

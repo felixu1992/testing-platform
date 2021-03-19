@@ -1,22 +1,21 @@
-import os
-import random
-import time
 import json
-import re
-from openpyxl import load_workbook
-from openpyxl.styles import Font
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+import os
+import time
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
+from openpyxl import load_workbook
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
+
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.handler.case import case_info
 from backend.handler.project import project_group
-from backend.handler.record import report, record
+from backend.handler.record import record
 from backend.models import Project, CaseInfo, Report
+from backend.settings import IGNORED, FAILED, PASSED
 from backend.util import UserHolder, Response, parse_data, get_params, update_fields, page_params, Executor, save, \
     batch_save
-from backend.settings import IGNORED, FAILED, PASSED
 from backend.util.resp_data import obj_to_dict
 from testing_platform.settings import FILE_REPO
 
@@ -58,7 +57,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         id = kwargs['pk']
         project = get_by_id(id)
         project.delete()
-        # TODO 删用例和报告
+        case_info.delete_by_project(id)
         return Response.def_success()
 
     def update(self, request, *args, **kwargs):
@@ -198,15 +197,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
             holder = CaseInfoHolder(src_parser.work_book, sheet_name)
             for case in holder.case_infos:
                 info = CaseInfo()
-                info.name = case.description
-                info.remark = case.step
+                info.name = case.step
+                info.remark = case.description
                 info.method = case.method
-                info.run = True
+                info.run = False if case.run else True
                 info.host = None
                 info.path = case.path
                 info.headers = case.headers
                 info.check_status = False
-                info.delay = 0
+                info.delay = case.sleep if case.sleep else 0
                 info.params = json.loads(case.params) if case.params else None
                 info.sample = json.loads(case.response_content) if case.response_content and len(
                     case.response_content) < 30000 and case.response_content != 'None' else None

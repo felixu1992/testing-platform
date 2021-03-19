@@ -309,9 +309,9 @@ class CaseInfo(BaseEntity):
     """
 
     id = models.AutoField(primary_key=True)
-    name = models.CharField(verbose_name='用例名称', max_length=32,
+    name = models.CharField(verbose_name='用例名称', max_length=64,
                             validators=[MinLengthValidator(1, message='最小长度为 1'),
-                                        MaxLengthValidator(32, message='最大长度为 32')])
+                                        MaxLengthValidator(64, message='最大长度为 64')])
     remark = models.CharField(verbose_name='用例备注', max_length=255, blank=True, null=True,
                               validators=[MinLengthValidator(1, message='最小长度为 1'),
                                           MaxLengthValidator(255, message='最大长度为 255')])
@@ -347,6 +347,10 @@ class CaseInfo(BaseEntity):
         db_table = 'platform_case_info'
         # 排序
         ordering = ['sort', '-updated_at']
+        # 唯一索引
+        constraints = [
+            models.UniqueConstraint(fields=['owner', 'project_id', 'name'], name='owner_project_name_idx')
+        ]
         # 普通索引
         indexes = [
             models.Index(fields=['owner', 'project_id', 'developer'], name='project_owner_developer_idx')
