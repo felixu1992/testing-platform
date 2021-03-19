@@ -37,9 +37,8 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
 
         body = parse_data(request, 'POST')
         case_info = CaseInfo(**body)
-        # 获取最大的 sort 值
-        max_sort = CaseInfo.objects.owner().order_by('-sort').values('sort').first()
-        case_info.sort = int(max_sort['sort']) + 1
+        project.get_by_id(case_info.project_id)
+        case_info.sort = computedMaxSort(case_info.project_id) + 1
         # 参数校验
         check_params(case_info)
         encoding(case_info)
@@ -137,9 +136,7 @@ class CaseInfoViewSet(viewsets.ModelViewSet):
         new_case_info.__dict__ = old_case_info.__dict__.copy()
         new_case_info.id = None
         new_case_info.name = name
-        # 获取最大的 sort 值
-        max_sort = CaseInfo.objects.owner().order_by('-sort').values('sort').first()
-        new_case_info.sort = int(max_sort['sort']) + 1
+        new_case_info.sort = computedMaxSort(new_case_info.project_id) + 1
         save(new_case_info)
         return Response.success(new_case_info)
 
@@ -357,11 +354,17 @@ def decoding(case_info):
         case_info.expected_values = json.loads(case_info.expected_values)
 
 
+def computedMaxSort(project_id):
+    """
+    计算当前项目中用例的最大排序
+    """
+    max_sort = CaseInfo.objects.owner().filter(project_id=project_id).order_by('-sort').values('sort').first()
+    return int(max_sort['sort']) if max_sort else 0
+
+
 # -------------------------------------------- 临时 -----------------------------------------
 def create_case(case):
-    # 获取最大的 sort 值
-    max_sort = CaseInfo.objects.owner().order_by('-sort').values('sort').first()
-    case.sort = int(max_sort['sort']) + 1
+    case.sort = computedMaxSort(case.project_id) + 1
     # 参数校验
     check_params(case)
     encoding(case)
