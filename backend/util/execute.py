@@ -304,27 +304,29 @@ class Executor:
         expected_keys = report.expected_keys
         # 预期结果
         expected_values = report.expected_values
-        # 循环预期字段的个数
-        for key, p in zip(expected_keys, expected_values):
-            key = key[0]
-            steps = [ste['value'] for ste in p['steps']]
-            # 是否存在接口依赖
-            if 'depend' not in p or not isinstance(p['depend'], int):
-                # 将预期字段以及预期值放入预期字典
-                expected.update({key: p['value']})
-            else:
-                # 取依赖的行数据
-                report = filter_obj_single(self.reports, 'case_id', int(p['depend']))
-                # 没取到直接判定失败
-                if not report:
-                    report.status = FAILED
-                    return
-                # 否则按照依赖步骤取出依赖值，填充预期字典
-                content = report.response_content
-                expected.update({key: get_value(content, steps)})
+        # 如果预期没填，直接成功
+        if expected_keys and expected_values:
+            # 循环预期字段的个数
+            for key, p in zip(expected_keys, expected_values):
+                key = key[0]
+                steps = [ste['value'] for ste in p['steps']]
+                # 是否存在接口依赖
+                if 'depend' not in p or not isinstance(p['depend'], int):
+                    # 将预期字段以及预期值放入预期字典
+                    expected.update({key: p['value']})
+                else:
+                    # 取依赖的行数据
+                    report = filter_obj_single(self.reports, 'case_id', int(p['depend']))
+                    # 没取到直接判定失败
+                    if not report:
+                        report.status = FAILED
+                        return
+                    # 否则按照依赖步骤取出依赖值，填充预期字典
+                    content = report.response_content
+                    expected.update({key: get_value(content, steps)})
 
-            # 将预期字段对应的结果从结果中取出(由于这种情况)
-            response.update({key: str(get_value(result, steps))})
+                # 将预期字段对应的结果从结果中取出(由于这种情况)
+                response.update({key: str(get_value(result, steps))})
         # 填入结果
         if expected == response:
             report.status = PASSED
