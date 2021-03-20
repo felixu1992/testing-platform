@@ -1,10 +1,8 @@
-from django.urls import path, include
 from rest_framework import routers
-from backend.handler.user import user
+from backend.handler.user import user, role
 
-router = routers.DefaultRouter()
-router.register(r'', user.UserViewSet, basename='user')
-urlpatterns = (
-    # 登录登出
-    path('', include(router.urls)),
-)
+user_router = routers.DefaultRouter()
+user_router.register(r'', user.UserViewSet, basename='user')
+
+role_router = routers.DefaultRouter()
+role_router.register(r'', role.ProjectViewSet, basename='role')

@@ -136,6 +136,36 @@ class User(BaseEntity):
         ordering = ['-updated_at']
 
 
+class Role(BaseEntity):
+    """
+    角色
+    """
+
+    id = models.CharField(primary_key=True, max_length=32,
+                          validators=[MinLengthValidator(1, message='最小长度为 1'),
+                                      MaxLengthValidator(32, message='最大长度为 32')])
+    name = models.CharField(verbose_name='角色名称', max_length=32,
+                            validators=[MinLengthValidator(1, message='最小长度为 1'),
+                                        MaxLengthValidator(32, message='最大长度为 32')])
+    role = models.CharField(verbose_name='角色', max_length=16,
+                            validators=[MinLengthValidator(1, message='最小长度为 1'),
+                                        MaxLengthValidator(32, message='最大长度为 16')])
+    remark = models.CharField(verbose_name='文件描述', max_length=255, blank=True, null=True,
+                              validators=[MaxLengthValidator(255, message='最大长度为 255')])
+    owner = models.IntegerField(verbose_name='分组拥有者', validators=[MinValueValidator(1, message='最小值为 1')])
+
+    class Meta:
+        # 表名
+        db_table = 'platform_role'
+        # 排序
+        ordering = ['-created_at']
+        # 唯一索引
+        constraints = [
+            models.UniqueConstraint(fields=['owner', 'name'], name='role_owner_name_idx'),
+            models.UniqueConstraint(fields=['owner', 'role'], name='role_owner_role_idx')
+        ]
+
+
 class ContactorGroup(BaseEntity):
     """
     联系人分组

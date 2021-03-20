@@ -18,9 +18,9 @@ from django.urls import path, include, re_path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
-
 from backend.handler.case.urls import case_router
 from backend.handler.record.urls import record_router, report_router
+from backend.handler.user.urls import role_router, user_router
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -38,7 +38,10 @@ schema_view = get_schema_view(
 urlpatterns = (
     re_path(r'^$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     # 登录登出
-    path('user/', include('backend.handler.user.urls')),
+    path('user/', include(user_router.urls)),
+
+    # 角色
+    path('role/', include(role_router.urls)),
 
     # 联系人
     path('', include('backend.handler.contactor.urls')),

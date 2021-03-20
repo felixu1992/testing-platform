@@ -89,7 +89,7 @@ WSGI_APPLICATION = 'testing_platform.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
-        'NAME': 'testing_platform',  # 数据库名称
+        'NAME': 'testing_platform_dev',  # 数据库名称
         'USER': 'root',  # 连接数据库的用户名称
         'PASSWORD': 'felixu123456',  # 用户密码
         'HOST': '47.111.94.101',  # 访问的数据库的主机的ip地址
