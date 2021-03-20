@@ -3,8 +3,8 @@ import json
 from django.core.exceptions import ValidationError
 from django.http import QueryDict
 from backend.util.jwt_token import UserHolder
-from backend import LOGGER
 from backend.exception import ErrorCode, PlatformError, ValidateError
+from backend.util.snowflake import Snowflake
 
 
 def parse_data(request, method):
@@ -164,3 +164,11 @@ def batch_update(objects, objs, fields):
     """
 
     objects.bulk_update(objs, fields=fields)
+
+
+def next_id(datacenter_id=1, worker_id=1, sequence=0):
+    """
+    得到雪花 id
+    """
+    snowflake = Snowflake(datacenter_id, worker_id, sequence)
+    return str(snowflake.get_id())
