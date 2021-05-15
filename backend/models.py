@@ -129,6 +129,10 @@ class User(BaseEntity):
                                             MaxLengthValidator(16, message='最大长度为 16')])
     avatar = models.CharField(verbose_name='头像', max_length=255, blank=True, null=True)
 
+    secret = models.CharField(verbose_name='访问密钥', max_length=32, unique=True, default='xxx',
+                              validators=[MinLengthValidator(1, message='最小长度为 1'),
+                                          MaxLengthValidator(32, message='最大长度为 32')])
+
     class Meta:
         # 表名
         db_table = 'platform_user'

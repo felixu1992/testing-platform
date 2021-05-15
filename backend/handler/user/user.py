@@ -18,7 +18,6 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserViewSet(viewsets.GenericViewSet):
-
     queryset = User
 
     serializer_class = UserSerializer
@@ -70,4 +69,15 @@ class UserViewSet(viewsets.GenericViewSet):
     def register(self, request):
         pass
 
+
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
+def get_by_secret(secret):
+    """
+    根据 secret 查询用户
+    """
+
+    try:
+        user = User.objects.get(secret=secret)
+    except ObjectDoesNotExist:
+        raise PlatformError.error_args(ErrorCode.DATA_NOT_EXISTED, '用户', 'secret')
+    return user

@@ -170,10 +170,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
         batch_save(Report.objects, [Report(**obj_to_dict(report)) for report in reports])
         return Response.success(reco)
 
-    @action(methods=['POST'], detail=False, url_path='import')
+    @action(methods=['POST'], detail=False, url_path='temp-import')
     def imported(self, request):
         """
-        用例 Excel 的导入
+        旧版 Excel 的导入
         """
         data = parse_data(request, 'POST')
         params = get_params(data, 'project_id')
@@ -219,6 +219,18 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if os.path.exists(file_path):
             os.remove(file_path)
         return Response.def_success()
+
+    # @action(methods=['GET'], detail=False, url_path='temp-export')
+    # def exported(self, request):
+    #     """
+    #     导出旧版 Excel
+    #     """
+    #     data = parse_data(request, 'POST')
+    #     params = get_params(data, 'project_id')
+    #     project = get_by_id(params['project_id'])
+    #     case_infos = CaseInfo.objects.owner().exact(project_id=project.id)
+
+
 
     @action(methods=['GET'], detail=False, url_path='statistics')
     def statistics(self, request):

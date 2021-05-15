@@ -4,6 +4,7 @@ from backend.util.jwt_token import UserHolder
 from backend.exception import ErrorCode, ValidateError, PlatformError
 from backend.util.resp_data import Response
 from backend import LOGGER
+from backend.handler.user import user
 from django.core.cache import cache
 
 try:
@@ -35,22 +36,40 @@ class RequestMiddleware(MiddlewareMixin):
             headers = request.headers
             try:
                 token = headers['Authorization']
+                self.__login_with_token(token)
             except KeyError:
-                return Response.failed(ErrorCode.REQUIRE_LOGIN)
-            # 认证信息不以 token 开头重定向会首页
-            if not token.startswith('token '):
-                return Response.failed(ErrorCode.MISSING_AUTHORITY)
-            # 取真实 token
-            token = token.replace('token ', '', 1)
-            # 取 token 的缓存
-            user_id = cache.get(token)
-            # 不存在则 token 过期，跳首页
-            if not user_id:
-                return Response.failed(ErrorCode.REQUIRE_LOGIN)
-            # 重置过期时间
-            cache.expire(token, timeout=60 * 60 * 24 * 7)
+                try:
+                    secret = headers['Platform-Secret']
+                    self.__login_with_secret(secret)
+                except KeyError:
+                    return Response.failed(ErrorCode.REQUIRE_LOGIN)
+
+    def __login_with_token(self, token):
+        # 认证信息不以 token 开头重定向会首页
+        if not token or not token.startswith('token '):
+            return Response.failed(ErrorCode.MISSING_AUTHORITY)
+        # 取真实 token
+        token = token.replace('token ', '', 1)
+        # 取 token 的缓存
+        user_id = cache.get(token)
+        # 不存在则 token 过期，跳首页
+        if not user_id:
+            return Response.failed(ErrorCode.REQUIRE_LOGIN)
+        # 重置过期时间
+        cache.expire(token, timeout=60 * 60 * 24 * 7)
+        # 缓存当前用户 id
+        UserHolder.cache_user(user_id)
+
+    def __login_with_secret(self, secret):
+        # 根据 secret 获取当前用户
+        if not secret:
+            return Response.failed(ErrorCode.MISSING_AUTHORITY)
+        try:
+            user_info = user.get_by_secret(secret)
             # 缓存当前用户 id
-            UserHolder.cache_user(user_id)
+            UserHolder.cache_user(user_info.id)
+        except PlatformError:
+            return Response.failed(ErrorCode.MISSING_AUTHORITY)
 
     def process_response(self, request, response):
         """
