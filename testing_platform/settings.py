@@ -91,16 +91,19 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
         'NAME': 'testing_platform',  # 数据库名称
         'USER': 'root',  # 连接数据库的用户名称
-        'PASSWORD': 'felixu123456',  # 用户密码
-        'HOST': '47.111.94.101',  # 访问的数据库的主机的ip地址
-        'PORT': '6306',  # 默认mysql访问端口
+        # 'PASSWORD': 'felixu123456',  # 用户密码
+        # 'HOST': '47.111.94.101',  # 访问的数据库的主机的ip地址
+        # 'PORT': '6306',  # 默认mysql访问端口
+        'PASSWORD': 'devicegroup',  # 用户密码
+        'HOST': '10.30.30.31',  # 访问的数据库的主机的ip地址
+        'PORT': '3306',  # 默认mysql访问端口
     }
 }
 
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://47.111.94.101:7379',
+        'LOCATION': 'redis://10.30.30.31:6379',
         'OPTIONS': {
             'CONNECTION_POOL_KWARGS': {'max_connections': 100},
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
@@ -108,6 +111,7 @@ CACHES = {
         },
     },
 }
+
 REDIS_TIMEOUT = 7 * 24 * 60 * 60
 CUBES_REDIS_TIMEOUT = 60 * 60
 NEVER_REDIS_TIMEOUT = 365 * 24 * 60 * 60
