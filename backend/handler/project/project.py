@@ -4,7 +4,7 @@ import time
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
-from openpyxl import load_workbook
+from django.http import FileResponse
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 
@@ -18,6 +18,7 @@ from backend.util import UserHolder, Response, parse_data, get_params, update_fi
     batch_save
 from backend.util.resp_data import obj_to_dict
 from testing_platform.settings import FILE_REPO
+from backend.util.temp_excel_handler import ExcelParser, CaseInfoHolder, build_extend, build_expected, ExcelWriter
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -175,6 +176,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         """
         旧版 Excel 的导入
         """
+
         data = parse_data(request, 'POST')
         params = get_params(data, 'project_id')
         project = get_by_id(params['project_id'])
@@ -220,17 +222,25 @@ class ProjectViewSet(viewsets.ModelViewSet):
             os.remove(file_path)
         return Response.def_success()
 
-    # @action(methods=['GET'], detail=False, url_path='temp-export')
-    # def exported(self, request):
-    #     """
-    #     导出旧版 Excel
-    #     """
-    #     data = parse_data(request, 'POST')
-    #     params = get_params(data, 'project_id')
-    #     project = get_by_id(params['project_id'])
-    #     case_infos = CaseInfo.objects.owner().exact(project_id=project.id)
+    @action(methods=['GET'], detail=False, url_path='temp-export')
+    def exported(self, request):
+        """
+        导出旧版 Excel
+        """
 
-
+        data = parse_data(request, 'GET')
+        params = get_params(data, 'project_id')
+        project = get_by_id(params['project_id'])
+        case_infos = CaseInfo.objects.owner().exact(project_id=project.id)
+        file_name = project.name + '_' + str(int(time.time() * 1000)) + '.xlsx'
+        file_path = os.path.join(FILE_REPO, file_name)
+        writer = ExcelWriter(filename=file_path, sheet_name='sheet')
+        writer.write(case_infos)
+        file = open(file_path, 'rb')
+        response = FileResponse(file)
+        response['Content-Type'] = 'application/octet-stream'
+        response['Content-Disposition'] = 'attachment;filename=' + file_name
+        return response
 
     @action(methods=['GET'], detail=False, url_path='statistics')
     def statistics(self, request):
@@ -245,132 +255,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response.success({'project': Project.objects.owner().count(),
                                  'case': case_info.count(),
                                  'record': record.count()})
-
-
-def build_extend(info, ex_keys, ex_values, cases):
-    if not ex_keys:
-        return
-    keys = ex_keys.split(',')
-    values = ex_values.split(',')
-    extend_keys = []
-    extend_values = []
-    for i in range(0, len(keys)):
-        extend_keys.append(keys[i].split('.'))
-        value = values[i]
-        depend_keys = value.split(':')
-        row = int(depend_keys[0])
-        filter_cases = [case for case in cases if case.row == row]
-        depend = filter_cases[0].id
-        steps = depend_keys[1].split('.')
-        extend_values.append({
-            'depend': depend,
-            'steps': steps
-        })
-    info.extend_keys = extend_keys
-    info.extend_values = extend_values
-
-
-def build_expected(info, ex_keys, ex_values, check_steps):
-    keys = ex_keys.split(',')
-    ex_values = ex_values if isinstance(ex_values, str) else str(ex_values)
-    values = ex_values.split(',')
-    _steps = check_steps.split(',')
-    expected_keys = []
-    expected_values = []
-    for i in range(0, len(keys)):
-        expected_keys.append(keys[i].split('.'))
-        value = values[i]
-        steps = [{'value': step} for step in _steps[i].split('.')]
-        expected_values.append({
-            'depend': None,
-            'steps': steps,
-            'value': value
-        })
-    info.expected_keys = expected_keys
-    info.expected_values = expected_values
-
-
-class ExcelParser:
-
-    def __init__(self, filename):
-        """
-        持有整个 Excel
-        """
-        self.work_book = load_workbook(filename)
-
-    def get_sheet_names(self):
-        """
-        拿到当前 Excel 所有的 Sheet
-        """
-        return self.work_book.sheetnames
-
-    def get_sheet_count(self):
-        """
-        拿到当前 Excel Sheet 的总数
-        """
-        return len(self.work_book.sheetnames)
-
-
-class CaseInfoHolder:
-
-    def __init__(self, work_book, sheet_name):
-        """
-        解析当前 sheet 页为 CaseInfo 对象列表
-
-        :param work_book: 整个工作簿
-        :param sheet_name: 当前 sheet 页
-        """
-        # 取工作簿中对应 sheet 页保存
-        self.sheet = work_book[sheet_name]
-        # 获取数据总行数
-        self.rows = list(self.sheet.rows)
-        # 获取表头列表
-        self.title = [column.value for column in self.rows[4]]
-        # 定义持有的用例列表
-        self.case_infos = []
-        # 获取登录行信息
-        self.default_host = self.sheet.cell(row=4, column=2).value
-        # 构建登录信息
-        self.login_info = CaseInfo()
-        self.build_longin_info()
-        # 构建所有请求信息
-        self.build_request_info()
-
-    def build_longin_info(self):
-        """
-        构建请求登录的信息
-        """
-        self.login_info.method = 'post'
-        self.login_info.host = self.sheet.cell(row=2, column=2).value
-        params = self.sheet.cell(row=3, column=2).value
-        self.login_info.params = {} if str_is_none(params) else json.loads(params)
-        self.login_info.path = ''
-        # 请求头为 application/x-www-form-urlencoded
-        self.login_info.headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-
-    def build_request_info(self):
-        """
-        构建所有用例信息
-        """
-        case_count = len(self.rows)
-        # 从第六行开始取用例信息
-        for row in range(5, case_count):
-            # 获取整行信息为列表
-            info = [column.value for column in self.rows[row]]
-            # 定义当前要处理的用例对象
-            case_info = CaseInfo()
-            # 将表头字段对应的列作为对象字段，将当前行对应的列信息作为值，填入用例对象中
-            for i in zip(self.title, info):
-                setattr(case_info, i[0], i[1])
-            # 定义当前用例所在行数(其实该行数为实际对应 Excel 中行数减 1)
-            case_info.row = row
-            # case_info.method = case_info.method.lower()
-            # 如果期望值没填则忽略该数据
-            expected_code = case_info.expected_key
-            if expected_code is None or expected_code == '':
-                continue
-            # 加入用例列表
-            self.case_infos.append(case_info)
 
 
 # -------------------------------------------- 以上为 RESTFUL 接口，以下为调用接口 -----------------------------------------
@@ -401,65 +285,3 @@ def count_by_group(group_id):
     """
 
     return Project.objects.filter(owner=UserHolder.current_user(), group_id=group_id).count()
-
-
-# -------------------------------------------- 迁移代码 -----------------------------------------
-
-def str_is_none(source):
-    """
-    判断字符串不为空
-    """
-    if source == '' or source == 'NULL' or source == 'None' or source is None:
-        return True
-    return False
-
-
-def get_value(source, steps):
-    """
-    根据入参字典以及取值步骤取出结果
-
-    取值步骤为 . 连接，如：data.records.0.name 含义为取 data 下 records 列表的第 0 条的 name 字段的值
-    """
-    # 分割取值步骤为列表
-    keys = steps.split(".")
-    try:
-        # 循环取值步骤字典
-        for i in range(0, len(keys)):
-            # 取字段值
-            key = keys[i]
-            # 如果为数字则转为数字(数字代表从列表取值)，否则为字符
-            key = key if not key.isdigit() else int(key)
-            # 从结果字典取值
-            source = source[key]
-    # 出现异常直接填充为空字符
-    except Exception:
-        return ''
-    return source
-
-
-def set_value(value, target, steps):
-    # 以 . 分割插入步骤为数组
-    keys = steps.split(".")
-    value_list = []
-    # 循环找到对应位置插入
-    for i in range(0, len(keys)):
-        key = keys[i]
-        # 如果当前步骤为字符串类型的数字，转为 int
-        key = key if not key.isdigit() else int(key)
-        # 取到最后了，直接将值插入该位置
-        if i == len(keys) - 1:
-            target[key] = value
-        # 否则继续往下找插入位置
-        # 如果末尾为数字，则认为入参为[]
-        elif len(keys) > 1 and (keys[len(keys) - 1]).isdigit():
-            value_list.append(value)
-            target[keys[len(keys) - 2]] = value_list
-            break
-        else:
-            try:
-                # 从目标中取当前 key 对应的值为下一次的目标
-                target = target[key]
-            except KeyError:
-                # 报错则下一次目标为空字典
-                target.update({key: {}})
-                target = target[key]

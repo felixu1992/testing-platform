@@ -39,10 +39,15 @@ class RequestMiddleware(MiddlewareMixin):
                 self.__login_with_token(token)
             except KeyError:
                 try:
-                    secret = headers['Platform-Secret']
-                    self.__login_with_secret(secret)
-                except KeyError:
-                    return Response.failed(ErrorCode.REQUIRE_LOGIN)
+                    token = request.GET['auth']
+                    self.__login_with_token(token)
+                except Exception:
+                    try:
+                        secret = headers['Platform-Secret']
+                        self.__login_with_secret(secret)
+                    except KeyError:
+                        return Response.failed(ErrorCode.REQUIRE_LOGIN)
+
 
     def __login_with_token(self, token):
         # 认证信息不以 token 开头重定向会首页
